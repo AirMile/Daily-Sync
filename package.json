@@ -1,0 +1,22 @@
+{
+  "name": "daily-sync-app",
+  "version": "1.0.0",
+  "description": "TLE Prototype - Mood Tracker met AI-gedreven vragen",
+  "type": "module",
+  "scripts": {
+    "dev": "npx live-server --port=3000 --no-browser",
+    "build": "echo 'No build step required for prototype'",
+    "test": "echo 'No tests yet'"
+  },
+  "keywords": [
+    "mood-tracker",
+    "mental-health",
+    "prototype",
+    "TLE"
+  ],
+  "author": "TLE Team",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
