@@ -21,11 +21,14 @@ prototype/
 │   ├── storage.js        # LocalStorage wrapper
 │   ├── mood.js           # Mood selector logic
 │   ├── questions.js      # Question bank logic
-│   └── stats.js          # Statistics calculator
+│   ├── stats.js          # Statistics calculator
+│   └── ai-diary.js       # AI diary generator (hardcoded prototype)
 ├── components/           # UI Components
 │   ├── mood-selector.js # Mood UI component
+│   ├── activity-selector.js # Activity tracking UI (Daylio-style)
 │   ├── question-card.js # Question UI component
-│   └── stats-view.js    # Stats UI component
+│   ├── stats-view.js    # Stats UI component
+│   └── diary-view.js    # AI diary display component
 ├── styles/              # CSS files
 │   ├── main.css        # Tailwind imports
 │   └── custom.css      # Custom styles

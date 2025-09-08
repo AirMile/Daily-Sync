@@ -9,6 +9,8 @@ npm-debug.log*
 # IDE
 .vscode/
 .idea/
+.claude/
+CLAUDE.md
 *.swp
 *.swo
 
@@ -31,3 +33,9 @@ coverage/
 # Temporary files
 *.tmp
 temp/
+
+# MCP files
+.mcp/
+.serena/
+mcp_*
+*.mcp
