@@ -2,6 +2,9 @@
 // Handles navigation between screens, manages app state, and coordinates all modules
 import { APP_SETTINGS, getQuestionsByMood, getRandomQuestions } from './config.js';
 import storageManager from './storage.js';
+import { MoodSelector } from '../components/mood-selector.js';
+import { ActivitySelector } from '../components/activity-selector.js';
+import { QuestionCard } from '../components/question-card.js';
 
 class DailySyncApp {
     constructor() {
@@ -14,13 +17,20 @@ class DailySyncApp {
             error: null
         };
         
+        // Component instances
+        this.components = {
+            moodSelector: null,
+            activitySelector: null,
+            questionCard: null
+        };
+        
         this.routes = {
-            'home': () => this.renderHomeView(),
-            'mood': () => this.renderMoodView(),
-            'questions': () => this.renderQuestionsView(),
-            'activities': () => this.renderActivitiesView(),
-            'diary': () => this.renderDiaryView(),
-            'stats': () => this.renderStatsView()
+            'home': () => this.showHomeView(),
+            'mood': () => this.showMoodView(),
+            'questions': () => this.showQuestionsView(),
+            'activities': () => this.showActivitiesView(),
+            'diary': () => this.showDiaryView(),
+            'stats': () => this.showStatsView()
         };
         
         this.initialize();
@@ -75,8 +85,9 @@ class DailySyncApp {
     setupEventListeners() {
         // Custom component events
         document.addEventListener('mood-selected', (event) => this.handleMoodSelected(event));
-        document.addEventListener('question-answered', (event) => this.handleQuestionAnswered(event));
-        document.addEventListener('activity-logged', (event) => this.handleActivityLogged(event));
+        document.addEventListener('questions-completed', (event) => this.handleQuestionsCompleted(event));
+        document.addEventListener('questions-auto-saved', (event) => this.handleQuestionsAutoSaved(event));
+        document.addEventListener('activities-selected', (event) => this.handleActivitiesSelected(event));
         document.addEventListener('navigate', (event) => this.handleNavigation(event));
         
         // Browser navigation
@@ -93,14 +104,15 @@ class DailySyncApp {
     }
     
     handleMoodSelected(event) {
-        const moodValue = event.detail.mood;
+        const { mood, label, emoji, color } = event.detail;
         
         // Start new entry or update existing
         if (!this.state.currentEntry) {
             this.state.currentEntry = this.createNewEntry();
         }
         
-        this.state.currentEntry.mood = moodValue;
+        this.state.currentEntry.mood = mood;
+        this.state.currentEntry.moodData = { value: mood, label, emoji, color };
         this.state.currentEntry.timestamp = Date.now();
         
         // Save and navigate to questions
@@ -108,37 +120,47 @@ class DailySyncApp {
         this.navigateTo('questions');
     }
     
-    async handleQuestionAnswered(event) {
-        const { questionId, answer } = event.detail;
+    async handleQuestionsCompleted(event) {
+        const { answers, questions, mood } = event.detail;
         
-        if (!this.state.currentEntry.answers) {
-            this.state.currentEntry.answers = {};
+        if (!this.state.currentEntry) {
+            this.state.currentEntry = this.createNewEntry();
         }
         
-        this.state.currentEntry.answers[questionId] = answer;
-        
-        // Validate answer length
-        if (answer.length < APP_SETTINGS.validation.minAnswerLength) {
-            this.showError("Answer must be at least 10 characters");
-            return;
-        }
+        // Store answers and questions
+        this.state.currentEntry.answers = answers;
+        this.state.currentEntry.questions = questions;
         
         // Save entry
         await storageManager.saveEntry(this.state.currentEntry);
         
-        // Check if all questions are answered
-        if (this.allQuestionsAnswered()) {
-            this.navigateTo('activities');
+        // Navigate to activities
+        this.navigateTo('activities');
+    }
+    
+    async handleQuestionsAutoSaved(event) {
+        const { answers, currentQuestion, totalQuestions } = event.detail;
+        
+        if (this.state.currentEntry) {
+            this.state.currentEntry.answers = answers;
+            this.state.currentEntry.currentQuestionIndex = currentQuestion;
+            await storageManager.saveEntry(this.state.currentEntry);
         }
     }
     
-    async handleActivityLogged(event) {
-        const activities = event.detail.activities;
+    async handleActivitiesSelected(event) {
+        const { activities, count } = event.detail;
+        
+        if (!this.state.currentEntry) {
+            this.state.currentEntry = this.createNewEntry();
+        }
         
         this.state.currentEntry.activities = activities;
+        this.state.currentEntry.activityCount = count;
         
         // Mark entry as complete
         this.state.currentEntry.completed = true;
+        this.state.currentEntry.completedAt = Date.now();
         
         // Save entry and update streak
         await storageManager.saveEntry(this.state.currentEntry);
@@ -222,19 +244,20 @@ class DailySyncApp {
             }
         });
         
-        // Render current view
-        const renderFunction = this.routes[this.state.currentView];
-        if (renderFunction) {
-            viewContainer.innerHTML = renderFunction();
+        // Show current view
+        const showFunction = this.routes[this.state.currentView];
+        if (showFunction) {
+            showFunction();
         }
     }
     
-    renderHomeView() {
-        return `
+    showHomeView() {
+        const viewContainer = document.getElementById('view-container');
+        viewContainer.innerHTML = `
             <div class="home-view">
                 <h2>Welcome to Daily Sync</h2>
                 <p>How do you feel today?</p>
-                <button class="primary-btn" onclick="app.navigateTo('mood')">
+                <button class="primary-btn start-today-btn">
                     Start today
                 </button>
                 <div class="streak-info">
@@ -242,139 +265,136 @@ class DailySyncApp {
                 </div>
             </div>
         `;
-    }
-    
-    renderMoodView() {
-        return `
-            <div class="mood-view">
-                <h2>How do you feel today?</h2>
-                <div class="mood-selector">
-                    <button class="mood-btn" data-mood="5">😄</button>
-                    <button class="mood-btn" data-mood="4">😊</button>
-                    <button class="mood-btn" data-mood="3">😐</button>
-                    <button class="mood-btn" data-mood="2">😔</button>
-                    <button class="mood-btn" data-mood="1">😢</button>
-                </div>
-                <script>
-                    document.querySelectorAll('.mood-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const mood = parseInt(e.target.getAttribute('data-mood'));
-                            document.dispatchEvent(new CustomEvent('mood-selected', { 
-                                detail: { mood } 
-                            }));
-                        });
-                    });
-                </script>
-            </div>
-        `;
-    }
-    
-    renderQuestionsView() {
-        if (!this.state.currentEntry || this.state.currentEntry.mood === null) {
+        
+        // Bind start button
+        viewContainer.querySelector('.start-today-btn').addEventListener('click', () => {
             this.navigateTo('mood');
-            return '';
+        });
+        
+        // Hide all components
+        this.hideAllComponents();
+    }
+    
+    showMoodView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        // Initialize mood selector component if not exists
+        if (!this.components.moodSelector) {
+            viewContainer.innerHTML = '<div id="mood-selector-container"></div>';
+            const container = document.getElementById('mood-selector-container');
+            this.components.moodSelector = new MoodSelector(container);
         }
         
-        const questions = getRandomQuestions(
-            getQuestionsByMood(this.state.currentEntry.mood),
-            3
-        );
+        // Hide other components but not the mood selector
+        if (this.components.activitySelector) {
+            this.components.activitySelector.hide();
+        }
+        if (this.components.questionCard) {
+            this.components.questionCard.hide();
+        }
         
-        return `
-            <div class="questions-view">
-                <h2>Tell us more about your day</h2>
-                <div class="questions-container">
-                    ${questions.map((q, index) => `
-                        <div class="question-card" data-question-id="${q.id}">
-                            <h3>${q.text}</h3>
-                            <textarea 
-                                placeholder="Your answer (minimum 10 characters)..."
-                                data-question-id="${q.id}"
-                            ></textarea>
-                            <button class="submit-answer-btn" data-question-id="${q.id}">
-                                Next
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-                <script>
-                    document.querySelectorAll('.submit-answer-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const questionId = e.target.getAttribute('data-question-id');
-                            const textarea = document.querySelector(\`textarea[data-question-id="\${questionId}"]\`);
-                            const answer = textarea.value.trim();
-                            
-                            if (answer.length >= 10) {
-                                document.dispatchEvent(new CustomEvent('question-answered', { 
-                                    detail: { questionId, answer } 
-                                }));
-                                e.target.closest('.question-card').style.opacity = '0.5';
-                                e.target.disabled = true;
-                            } else {
-                                alert('Answer must be at least 10 characters');
-                            }
-                        });
-                    });
-                </script>
-            </div>
-        `;
+        this.components.moodSelector.reset();
+        this.components.moodSelector.show();
     }
     
-    renderActivitiesView() {
-        return `
-            <div class="activities-view">
-                <h2>What did you do today?</h2>
-                <p>Select the activities you engaged in today.</p>
-                <div class="activities-list">
-                    <label><input type="checkbox" value="work"> Work</label>
-                    <label><input type="checkbox" value="exercise"> Exercise</label>
-                    <label><input type="checkbox" value="social"> Social</label>
-                    <label><input type="checkbox" value="hobby"> Hobby</label>
-                    <label><input type="checkbox" value="rest"> Rest</label>
-                </div>
-                <button class="primary-btn" onclick="this.submitActivities()">
-                    Complete
-                </button>
-                <script>
-                    function submitActivities() {
-                        const checked = document.querySelectorAll('.activities-list input:checked');
-                        const activities = Array.from(checked).map(input => input.value);
-                        
-                        document.dispatchEvent(new CustomEvent('activity-logged', { 
-                            detail: { activities } 
-                        }));
-                    }
-                    window.submitActivities = submitActivities;
-                </script>
-            </div>
-        `;
+    showQuestionsView() {
+        if (!this.state.currentEntry || this.state.currentEntry.mood === null && this.state.currentEntry.mood !== 0) {
+            this.navigateTo('mood');
+            return;
+        }
+        
+        const viewContainer = document.getElementById('view-container');
+        
+        // Initialize question card component if not exists
+        if (!this.components.questionCard) {
+            viewContainer.innerHTML = '<div id="question-card-container"></div>';
+            const container = document.getElementById('question-card-container');
+            this.components.questionCard = new QuestionCard(container);
+        }
+        
+        // Hide other components but not the question card
+        if (this.components.moodSelector) {
+            this.components.moodSelector.hide();
+        }
+        if (this.components.activitySelector) {
+            this.components.activitySelector.hide();
+        }
+        
+        this.components.questionCard.setMood(this.state.currentEntry.mood);
+        
+        // Load existing answers if any
+        if (this.state.currentEntry.answers) {
+            this.components.questionCard.setAnswers(this.state.currentEntry.answers);
+        }
+        
+        this.components.questionCard.show();
     }
     
-    renderDiaryView() {
-        return `
+    showActivitiesView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        // Initialize activity selector component if not exists
+        if (!this.components.activitySelector) {
+            viewContainer.innerHTML = '<div id="activity-selector-container"></div>';
+            const container = document.getElementById('activity-selector-container');
+            this.components.activitySelector = new ActivitySelector(container);
+        }
+        
+        // Hide other components but not the activity selector
+        if (this.components.moodSelector) {
+            this.components.moodSelector.hide();
+        }
+        if (this.components.questionCard) {
+            this.components.questionCard.hide();
+        }
+        
+        this.components.activitySelector.reset();
+        this.components.activitySelector.show();
+    }
+    
+    showDiaryView() {
+        const viewContainer = document.getElementById('view-container');
+        viewContainer.innerHTML = `
             <div class="diary-view">
-                <h2>Your diary entry</h2>
+                <h2>Great job! 🎉</h2>
                 <p>Thank you for completing your daily check-in!</p>
                 <div class="diary-content">
-                    <p>Your entry has been saved and added to your personal diary.</p>
+                    <div class="entry-summary">
+                        <p>Your entry has been saved and added to your personal diary.</p>
+                        <div class="completion-badge">
+                            <span class="badge-icon">✓</span>
+                            <span>Day ${this.state.streak} Complete!</span>
+                        </div>
+                    </div>
                 </div>
-                <button class="primary-btn" onclick="app.navigateTo('home')">
+                <button class="primary-btn back-home-btn">
                     Back to home
                 </button>
             </div>
         `;
+        
+        // Bind back button
+        viewContainer.querySelector('.back-home-btn').addEventListener('click', () => {
+            this.navigateTo('home');
+        });
+        
+        this.hideAllComponents();
     }
     
-    renderStatsView() {
-        return `
+    showStatsView() {
+        const viewContainer = document.getElementById('view-container');
+        viewContainer.innerHTML = `
             <div class="stats-view">
                 <h2>Your statistics</h2>
                 <p>Coming soon: your mood trends and insights.</p>
                 <div class="stats-placeholder">
                     <p>Statistics will be implemented in Phase 3</p>
+                    <div class="placeholder-icon">📊</div>
                 </div>
             </div>
         `;
+        
+        this.hideAllComponents();
     }
     
     createNewEntry() {
@@ -448,6 +468,34 @@ class DailySyncApp {
         }, 3000);
     }
     
+    hideAllComponents() {
+        // Hide all component instances
+        if (this.components.moodSelector) {
+            this.components.moodSelector.hide();
+        }
+        if (this.components.activitySelector) {
+            this.components.activitySelector.hide();
+        }
+        if (this.components.questionCard) {
+            this.components.questionCard.hide();
+        }
+    }
+    
+    destroyAllComponents() {
+        // Clean up all component instances
+        Object.values(this.components).forEach(component => {
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        });
+        
+        this.components = {
+            moodSelector: null,
+            activitySelector: null,
+            questionCard: null
+        };
+    }
+
     emit(eventName, detail) {
         const customEvent = new CustomEvent(eventName, { detail });
         document.dispatchEvent(customEvent);

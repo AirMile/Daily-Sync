@@ -9,6 +9,66 @@ export const MOODS = Object.freeze({
     ]
 });
 
+export const ACTIVITIES = Object.freeze({
+    emotions: [
+        { id: 'happy', label: 'Happy', emoji: '😊', color: '#10B981' },
+        { id: 'excited', label: 'Excited', emoji: '🤩', color: '#FBBF24' },
+        { id: 'calm', label: 'Calm', emoji: '😌', color: '#60A5FA' },
+        { id: 'stressed', label: 'Stressed', emoji: '😰', color: '#FB923C' },
+        { id: 'tired', label: 'Tired', emoji: '😴', color: '#94A3B8' },
+        { id: 'anxious', label: 'Anxious', emoji: '😟', color: '#EF4444' },
+        { id: 'grateful', label: 'Grateful', emoji: '🙏', color: '#10B981' },
+        { id: 'frustrated', label: 'Frustrated', emoji: '😤', color: '#FB923C' }
+    ],
+    
+    health: [
+        { id: 'exercise', label: 'Exercise', emoji: '💪', color: '#10B981' },
+        { id: 'walk', label: 'Walk', emoji: '🚶', color: '#60A5FA' },
+        { id: 'yoga', label: 'Yoga', emoji: '🧘', color: '#8B5CF6' },
+        { id: 'meditation', label: 'Meditation', emoji: '🧘‍♂️', color: '#8B5CF6' },
+        { id: 'sleep_well', label: 'Slept Well', emoji: '😴', color: '#64748B' },
+        { id: 'headache', label: 'Headache', emoji: '🤕', color: '#EF4444' },
+        { id: 'sick', label: 'Feeling Sick', emoji: '🤒', color: '#EF4444' }
+    ],
+    
+    hobbies: [
+        { id: 'reading', label: 'Reading', emoji: '📚', color: '#8B5CF6' },
+        { id: 'music', label: 'Music', emoji: '🎵', color: '#EC4899' },
+        { id: 'gaming', label: 'Gaming', emoji: '🎮', color: '#06B6D4' },
+        { id: 'cooking', label: 'Cooking', emoji: '👨‍🍳', color: '#F59E0B' },
+        { id: 'art', label: 'Art/Drawing', emoji: '🎨', color: '#EC4899' },
+        { id: 'photography', label: 'Photography', emoji: '📷', color: '#64748B' },
+        { id: 'gardening', label: 'Gardening', emoji: '🌱', color: '#10B981' }
+    ],
+    
+    social: [
+        { id: 'friends', label: 'Time with Friends', emoji: '👥', color: '#FBBF24' },
+        { id: 'family', label: 'Time with Family', emoji: '👨‍👩‍👧‍👦', color: '#EC4899' },
+        { id: 'partner', label: 'Time with Partner', emoji: '💕', color: '#EF4444' },
+        { id: 'party', label: 'Party/Event', emoji: '🎉', color: '#8B5CF6' },
+        { id: 'alone_time', label: 'Alone Time', emoji: '🧘', color: '#60A5FA' },
+        { id: 'phone_call', label: 'Phone Call', emoji: '📞', color: '#06B6D4' }
+    ],
+    
+    work: [
+        { id: 'productive', label: 'Productive', emoji: '💼', color: '#10B981' },
+        { id: 'meeting', label: 'Meetings', emoji: '👥', color: '#60A5FA' },
+        { id: 'deadline', label: 'Deadline Pressure', emoji: '⏰', color: '#FB923C' },
+        { id: 'learning', label: 'Learning', emoji: '📚', color: '#8B5CF6' },
+        { id: 'creative', label: 'Creative Work', emoji: '💡', color: '#FBBF24' },
+        { id: 'teamwork', label: 'Teamwork', emoji: '🤝', color: '#06B6D4' }
+    ],
+    
+    lifestyle: [
+        { id: 'travel', label: 'Travel', emoji: '✈️', color: '#06B6D4' },
+        { id: 'shopping', label: 'Shopping', emoji: '🛍️', color: '#EC4899' },
+        { id: 'cleaning', label: 'Cleaning', emoji: '🧹', color: '#64748B' },
+        { id: 'nature', label: 'Time in Nature', emoji: '🌿', color: '#10B981' },
+        { id: 'movies', label: 'Movies/TV', emoji: '🍿', color: '#F59E0B' },
+        { id: 'restaurant', label: 'Restaurant/Dining', emoji: '🍽️', color: '#EF4444' }
+    ]
+});
+
 export const QUESTIONS = Object.freeze({
     // Positive questions (mood >= 4)
     positive: [

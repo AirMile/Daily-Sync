@@ -16,7 +16,7 @@ class StorageManager {
             return true;
         } catch (error) {
             console.error('LocalStorage not available:', error);
-            throw new Error('LocalStorage is niet beschikbaar');
+            throw new Error('LocalStorage is not available');
         }
     }
     
