@@ -1,76 +1,83 @@
 // Export configuration as frozen objects for immutability
 export const MOODS = Object.freeze({
     levels: [
-        { value: 5, emoji: '😄', label: 'Geweldig', color: '#10B981' },
-        { value: 4, emoji: '😊', label: 'Goed', color: '#60A5FA' },
-        { value: 3, emoji: '😐', label: 'Oké', color: '#FBBF24' },
-        { value: 2, emoji: '😔', label: 'Slecht', color: '#FB923C' },
-        { value: 1, emoji: '😢', label: 'Vreselijk', color: '#EF4444' }
+        { value: 5, emoji: '😄', label: 'Amazing', color: '#10B981' },
+        { value: 4, emoji: '😊', label: 'Good', color: '#60A5FA' },
+        { value: 3, emoji: '😐', label: 'Okay', color: '#FBBF24' },
+        { value: 2, emoji: '😔', label: 'Bad', color: '#FB923C' },
+        { value: 1, emoji: '😢', label: 'Terrible', color: '#EF4444' }
     ]
 });
 
 export const QUESTIONS = Object.freeze({
-    // Positieve vragen (mood >= 4)
+    // Positive questions (mood >= 4)
     positive: [
-        { id: 1, text: "Wat maakte je vandaag het meest blij?", category: "happiness" },
-        { id: 2, text: "Waar ben je vandaag dankbaar voor?", category: "gratitude" },
-        { id: 3, text: "Wat was je grootste overwinning vandaag?", category: "achievement" },
-        { id: 4, text: "Hoe heb je vandaag voor jezelf gezorgd?", category: "self-care" },
-        { id: 5, text: "Wat gaf je energie vandaag?", category: "energy" },
-        { id: 6, text: "Welk compliment zou je jezelf vandaag geven?", category: "self-love" },
-        { id: 7, text: "Wat heeft je vandaag geïnspireerd?", category: "inspiration" },
-        { id: 8, text: "Welke positieve verandering heb je vandaag gemaakt?", category: "growth" },
-        { id: 9, text: "Wie of wat heeft je vandaag een glimlach bezorgd?", category: "connection" },
-        { id: 10, text: "Wat ging er vandaag beter dan verwacht?", category: "surprise" }
+        { id: 1, text: "What makes you happiest in life?", category: "happiness" },
+        { id: 2, text: "What are you most grateful for?", category: "gratitude" },
+        { id: 3, text: "What do you consider your biggest achievements?", category: "achievement" },
+        { id: 4, text: "How do you practice self-care?", category: "self-care" },
+        { id: 5, text: "What energizes you?", category: "energy" },
+        { id: 6, text: "What do you love most about yourself?", category: "self-love" },
+        { id: 7, text: "What inspires you?", category: "inspiration" },
+        { id: 8, text: "What positive changes have you made in your life?", category: "growth" },
+        { id: 9, text: "Who or what brings joy to your life?", category: "connection" },
+        { id: 10, text: "What tends to exceed your expectations?", category: "surprise" }
     ],
     
-    // Negatieve vragen (mood <= 2)
+    // Negative questions (mood <= 2)
     negative: [
-        { id: 11, text: "Wat maakte je vandaag gespannen?", category: "stress" },
-        { id: 12, text: "Waar maak je je zorgen over?", category: "worry" },
-        { id: 13, text: "Wat zou je anders willen doen?", category: "regret" },
-        { id: 14, text: "Wat kostte je vandaag energie?", category: "drain" },
-        { id: 15, text: "Waar heb je hulp bij nodig?", category: "support" },
-        { id: 16, text: "Welke gedachte blijft maar terugkomen?", category: "rumination" },
-        { id: 17, text: "Wat voelde vandaag als een obstakel?", category: "challenge" },
-        { id: 18, text: "Waar voel je je onzeker over?", category: "insecurity" },
-        { id: 19, text: "Wat maakt je verdrietig of teleurgesteld?", category: "sadness" },
-        { id: 20, text: "Wat heb je vandaag vermeden?", category: "avoidance" }
+        { id: 11, text: "What typically causes you stress?", category: "stress" },
+        { id: 12, text: "What are your main worries?", category: "worry" },
+        { id: 13, text: "What would you like to change about yourself?", category: "regret" },
+        { id: 14, text: "What drains your energy?", category: "drain" },
+        { id: 15, text: "What do you need help with?", category: "support" },
+        { id: 16, text: "What thoughts tend to occupy your mind?", category: "rumination" },
+        { id: 17, text: "What feels like an obstacle in your life?", category: "challenge" },
+        { id: 18, text: "What makes you feel insecure?", category: "insecurity" },
+        { id: 19, text: "What makes you sad or disappointed?", category: "sadness" },
+        { id: 20, text: "What do you tend to avoid?", category: "avoidance" }
     ],
     
-    // Neutrale/reflectieve vragen (mood = 3)
+    // Neutral/reflective questions (mood = 3)
     neutral: [
-        { id: 21, text: "Hoe zou je vandaag in één woord beschrijven?", category: "reflection" },
-        { id: 22, text: "Wat heb je vandaag geleerd?", category: "learning" },
-        { id: 23, text: "Welk moment blijft je het meest bij?", category: "memory" },
-        { id: 24, text: "Wat heeft je vandaag verrast?", category: "unexpected" },
-        { id: 25, text: "Waar ben je vandaag mee bezig geweest?", category: "activity" },
-        { id: 26, text: "Wat staat er morgen op je planning?", category: "future" },
-        { id: 27, text: "Hoe voel je je fysiek vandaag?", category: "physical" },
-        { id: 28, text: "Wat zou je tegen je jongere zelf zeggen?", category: "wisdom" },
-        { id: 29, text: "Welke keuze heeft vandaag impact gehad?", category: "decision" },
-        { id: 30, text: "Wat betekent succes voor jou vandaag?", category: "values" }
+        { id: 21, text: "How would you describe yourself in one word?", category: "reflection" },
+        { id: 22, text: "What have you learned about yourself recently?", category: "learning" },
+        { id: 23, text: "What memories are most important to you?", category: "memory" },
+        { id: 24, text: "What surprises you about life?", category: "unexpected" },
+        { id: 25, text: "What are you passionate about?", category: "activity" },
+        { id: 26, text: "What are your goals and aspirations?", category: "future" },
+        { id: 27, text: "How would you describe your physical well-being?", category: "physical" },
+        { id: 28, text: "What advice would you give your younger self?", category: "wisdom" },
+        { id: 29, text: "What important decisions have shaped who you are?", category: "decision" },
+        { id: 30, text: "What does success mean to you?", category: "values" }
     ],
     
-    // Follow-up vragen (context-based)
+    // Follow-up questions (context-based)
     followUp: [
-        { id: 31, text: "Kun je daar meer over vertellen?", category: "elaboration" },
-        { id: 32, text: "Hoe voelde dat voor jou?", category: "emotion" },
-        { id: 33, text: "Wat zou je de volgende keer anders doen?", category: "improvement" },
-        { id: 34, text: "Wat heb je daarvan geleerd?", category: "insight" },
-        { id: 35, text: "Hoe ga je daarmee om?", category: "coping" }
+        { id: 31, text: "Can you tell me more about that?", category: "elaboration" },
+        { id: 32, text: "How does that make you feel?", category: "emotion" },
+        { id: 33, text: "What would you do differently?", category: "improvement" },
+        { id: 34, text: "What have you learned from that?", category: "insight" },
+        { id: 35, text: "How do you cope with that?", category: "coping" }
     ]
 });
 
-export const APP_CONFIG = Object.freeze({
-    // Storage
-    storageKey: 'dailySyncData',
-    backupKey: 'dailySyncBackup',
+export const APP_SETTINGS = Object.freeze({
+    // Storage keys
+    storageKeys: {
+        entries: 'dailySync_entries',
+        settings: 'dailySync_settings',
+        currentStreak: 'dailySync_streak'
+    },
+    
+    // Validation rules
+    validation: {
+        minAnswerLength: 10,
+        maxAnswerLength: 500
+    },
     
     // Question settings
     maxQuestionsPerDay: 3,
-    minAnswerLength: 10, // minimum characters
-    maxAnswerLength: 500, // maximum characters
     
     // UI settings
     defaultTheme: 'light',
@@ -84,10 +91,12 @@ export const APP_CONFIG = Object.freeze({
     
     // Navigation
     routes: {
+        home: '#home',
         mood: '#mood',
         questions: '#questions',
-        stats: '#stats',
-        settings: '#settings'
+        activities: '#activities',
+        diary: '#diary',
+        stats: '#stats'
     },
     
     // Time settings

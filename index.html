@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sync - Mood Tracking</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/custom.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <header class="app-header">
+            <h1 class="app-title">Daily Sync</h1>
+            <div class="streak-display">
+                <span id="streak-counter">0</span> days
+            </div>
+        </header>
+        
+        <nav class="app-nav">
+            <button class="nav-btn" data-route="home">Home</button>
+            <button class="nav-btn" data-route="mood">Mood</button>
+            <button class="nav-btn" data-route="stats">Statistics</button>
+        </nav>
+        
+        <main id="main-content" class="main-content">
+            <div class="loading-state" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading...</p>
+            </div>
+            
+            <div class="error-state" id="error" style="display: none;">
+                <h2>Oops! Something went wrong</h2>
+                <p id="error-message"></p>
+                <button class="retry-btn" onclick="location.reload()">Try again</button>
+            </div>
+            
+            <div class="view-container" id="view-container">
+                <!-- Dynamic content will be rendered here -->
+            </div>
+        </main>
+        
+        <footer class="app-footer">
+            <p>&copy; 2024 Daily Sync - Prototype</p>
+        </footer>
+    </div>
+
+    <!-- ES6 Modules -->
+    <script type="module" src="modules/app.js"></script>
+</body>
+</html>
