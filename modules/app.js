@@ -115,9 +115,9 @@ class DailySyncApp {
         this.state.currentEntry.moodData = { value: mood, label, emoji, color };
         this.state.currentEntry.timestamp = Date.now();
         
-        // Save and navigate to questions
+        // Save and navigate to activities
         storageManager.saveEntry(this.state.currentEntry);
-        this.navigateTo('questions');
+        this.navigateTo('activities');
     }
     
     async handleQuestionsCompleted(event) {
@@ -131,11 +131,17 @@ class DailySyncApp {
         this.state.currentEntry.answers = answers;
         this.state.currentEntry.questions = questions;
         
-        // Save entry
-        await storageManager.saveEntry(this.state.currentEntry);
+        // Mark entry as complete
+        this.state.currentEntry.completed = true;
+        this.state.currentEntry.completedAt = Date.now();
         
-        // Navigate to activities
-        this.navigateTo('activities');
+        // Save entry and update streak
+        await storageManager.saveEntry(this.state.currentEntry);
+        await this.updateStreak();
+        
+        // Reset current entry and go to diary view
+        this.state.currentEntry = null;
+        this.navigateTo('diary');
     }
     
     async handleQuestionsAutoSaved(event) {
@@ -158,17 +164,9 @@ class DailySyncApp {
         this.state.currentEntry.activities = activities;
         this.state.currentEntry.activityCount = count;
         
-        // Mark entry as complete
-        this.state.currentEntry.completed = true;
-        this.state.currentEntry.completedAt = Date.now();
-        
-        // Save entry and update streak
+        // Save entry and navigate to questions
         await storageManager.saveEntry(this.state.currentEntry);
-        await this.updateStreak();
-        
-        // Reset current entry and go to diary view
-        this.state.currentEntry = null;
-        this.navigateTo('diary');
+        this.navigateTo('questions');
     }
     
     handleNavigation(event) {
@@ -298,7 +296,7 @@ class DailySyncApp {
     }
     
     showQuestionsView() {
-        if (!this.state.currentEntry || this.state.currentEntry.mood === null && this.state.currentEntry.mood !== 0) {
+        if (!this.state.currentEntry || (this.state.currentEntry.mood === null && this.state.currentEntry.mood !== 0) || !this.state.currentEntry.activities) {
             this.navigateTo('mood');
             return;
         }

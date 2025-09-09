@@ -65,7 +65,7 @@ export class QuestionCard {
                     </div>
                     
                     <div class="question-navigation">
-                        <button class="nav-btn previous-btn" disabled>
+                        <button class="question-nav-btn previous-btn" disabled>
                             <span>← Previous</span>
                         </button>
                         
@@ -73,8 +73,12 @@ export class QuestionCard {
                             <!-- Progress dots will be generated here -->
                         </div>
                         
-                        <button class="nav-btn next-btn" disabled>
+                        <button class="question-nav-btn next-btn" disabled>
                             <span>Next →</span>
+                        </button>
+                        
+                        <button class="question-nav-btn stats-btn">
+                            <span>📊 Statistics</span>
                         </button>
                     </div>
                     
@@ -115,7 +119,24 @@ export class QuestionCard {
         });
         
         this.container.querySelector('.next-btn').addEventListener('click', () => {
-            this.navigateToQuestion(this.currentQuestionIndex + 1);
+            // Check if we're on the last question and should complete
+            const isLastQuestion = this.currentQuestionIndex === this.questions.length - 1;
+            const currentAnswer = this.answers[this.questions[this.currentQuestionIndex]?.id] || '';
+            const isValidAnswer = currentAnswer.trim().length >= APP_SETTINGS.validation.minAnswerLength;
+            
+            if (isLastQuestion && isValidAnswer) {
+                // Complete the questions and navigate to activities
+                this.handleComplete();
+            } else if (!isLastQuestion && isValidAnswer) {
+                // Navigate to next question
+                this.navigateToQuestion(this.currentQuestionIndex + 1);
+            }
+            // If answer is not valid, button should be disabled anyway
+        });
+        
+        // Statistics button
+        this.container.querySelector('.stats-btn').addEventListener('click', () => {
+            this.handleGoToStats();
         });
         
         // Complete button
@@ -130,7 +151,13 @@ export class QuestionCard {
     updateDisplay() {
         if (this.questions.length === 0) return;
         
+        // Validate current question index
+        if (this.currentQuestionIndex >= this.questions.length || this.currentQuestionIndex < 0) {
+            this.currentQuestionIndex = 0;
+        }
+        
         const currentQuestion = this.questions[this.currentQuestionIndex];
+        if (!currentQuestion) return;
         
         // Update progress
         const progressFill = this.container.querySelector('.progress-fill');
@@ -426,7 +453,7 @@ export class QuestionCard {
         }
         
         // Emit completion event
-        const event = new CustomEvent('questions-completed', {
+        const completionEvent = new CustomEvent('questions-completed', {
             detail: {
                 answers: { ...this.answers },
                 questions: this.questions,
@@ -436,10 +463,53 @@ export class QuestionCard {
             bubbles: true
         });
         
-        this.container.dispatchEvent(event);
+        this.container.dispatchEvent(completionEvent);
         
-        // Show completion section
-        this.showCompletionSection();
+        // Navigate to activities view
+        const navigationEvent = new CustomEvent('navigate', {
+            detail: {
+                route: 'activities',
+                data: {
+                    answers: { ...this.answers },
+                    questions: this.questions,
+                    mood: this.mood
+                }
+            },
+            bubbles: true
+        });
+        
+        this.container.dispatchEvent(navigationEvent);
+    }
+    
+    handleGoToStats() {
+        // Filter answers to only include those with valid minimum length
+        const validAnswers = {};
+        const validQuestions = [];
+        
+        this.questions.forEach(question => {
+            const answer = this.answers[question.id];
+            if (answer && answer.trim().length >= APP_SETTINGS.validation.minAnswerLength) {
+                validAnswers[question.id] = answer;
+                validQuestions.push(question);
+            }
+        });
+        
+        // Emit event to navigate to statistics with filtered data
+        const event = new CustomEvent('navigate', {
+            detail: {
+                route: 'stats',
+                data: {
+                    answers: validAnswers,
+                    questions: validQuestions,
+                    mood: this.mood,
+                    totalAnswered: Object.keys(validAnswers).length,
+                    totalQuestions: this.questions.length
+                }
+            },
+            bubbles: true
+        });
+        
+        this.container.dispatchEvent(event);
     }
     
     showCompletionSection() {
