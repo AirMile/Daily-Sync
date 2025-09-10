@@ -7,6 +7,7 @@ import { ActivitySelector } from '../components/activity-selector.js';
 import { QuestionCard } from '../components/question-card.js';
 import { StatsView } from '../components/stats-view.js';
 import { DiaryView } from '../components/diary-view.js';
+import { quickLoadSampleData } from '../scripts/load-sample-data.js';
 
 class DailySyncApp {
     constructor() {
@@ -54,6 +55,9 @@ class DailySyncApp {
             // Load current streak
             const streak = await storageManager.getStreak();
             this.setState({ streak });
+            
+            // Auto-load sample data if no entries exist (for demo purposes)
+            await this.ensureDemoData();
             
             // Setup event listeners
             this.setupEventListeners();
@@ -189,9 +193,8 @@ class DailySyncApp {
             return;
         }
         
-        // Clear localStorage when navigating to home (reset app state)
+        // Reset current entry when navigating to home
         if (viewName === 'home') {
-            localStorage.clear();
             this.state.currentEntry = null;
             this.destroyAllComponents();
         }
@@ -395,23 +398,26 @@ class DailySyncApp {
             // Load all entries for statistics
             const entries = await storageManager.getAllEntries();
             
-            // Initialize stats view component if not exists
-            if (!this.components.statsView) {
-                viewContainer.innerHTML = '<div id="stats-view-container"></div>';
-                const container = document.getElementById('stats-view-container');
-                this.components.statsView = new StatsView();
-                
-                // Setup export event listener
-                container.addEventListener('export-requested', (event) => {
-                    this.handleExportRequest(event.detail);
-                });
+            // Destroy existing stats view component to ensure clean initialization
+            if (this.components.statsView) {
+                this.components.statsView.destroy();
+                this.components.statsView = null;
             }
+            
+            // Create fresh container and component
+            viewContainer.innerHTML = '<div id="stats-view-container"></div>';
+            const container = document.getElementById('stats-view-container');
+            this.components.statsView = new StatsView();
+            
+            // Setup export event listener
+            container.addEventListener('export-requested', (event) => {
+                this.handleExportRequest(event.detail);
+            });
             
             // Hide other components
             this.hideAllComponents();
             
             // Initialize stats view with data
-            const container = document.getElementById('stats-view-container');
             await this.components.statsView.init(container, entries);
             
         } catch (error) {
@@ -547,6 +553,25 @@ class DailySyncApp {
         // StatsView doesn't have a hide method - it manages its own container
     }
     
+    async ensureDemoData() {
+        try {
+            // Check if we have existing entries
+            const existingEntries = await storageManager.getAllEntries();
+            
+            // If no entries exist, load sample data for demo
+            if (!existingEntries || existingEntries.length === 0) {
+                console.log('🔄 No existing data found, loading sample data for demo...');
+                await quickLoadSampleData();
+                console.log('✅ Sample data loaded successfully');
+            } else {
+                console.log(`📊 Found ${existingEntries.length} existing entries, skipping sample data load`);
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not load sample data:', error);
+            // Don't throw - app should continue working even without sample data
+        }
+    }
+
     destroyAllComponents() {
         // Clean up all component instances
         Object.values(this.components).forEach(component => {
@@ -559,7 +584,8 @@ class DailySyncApp {
             moodSelector: null,
             activitySelector: null,
             questionCard: null,
-            statsView: null
+            statsView: null,
+            diaryView: null
         };
     }
 

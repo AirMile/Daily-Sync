@@ -1,110 +1,95 @@
 # components/stats-view.js
 
-**Purpose:** Statistics visualization component displaying mood trends, activity patterns, and data insights.
+**Purpose:** Statistics visualization component displaying mood trends, activity patterns, and AI-generated insights.
 
 ## Current Status
-**Note:** This component is currently a placeholder with TODO comments. Implementation planned for Phase 3 of development.
+**Fully implemented** - Active component providing comprehensive mood and activity statistics with AI-generated diary entries and personalized insights.
 
-## Planned Functionality
+## Implementation Details
 
 ### StatsView Class
-Component for visualizing historical mood and activity data through charts, graphs, and statistical insights.
+ES6 class-based component for visualizing historical mood and activity data through charts, statistics, and AI insights.
 
-#### Data Visualization
-- **Mood Trend Charts:** Line graphs showing mood progression over time
-- **Activity Correlation Charts:** Visual representation of activity-mood relationships
-- **Pattern Recognition Graphs:** Display recurring patterns and cycles
-- **Statistical Summaries:** Key metrics and averages displayed prominently
+#### Component Structure
+1. **Summary Cards Section** - Key metrics displayed prominently
+2. **AI Insights Section** - AI-generated diary entries and personalized insights
+3. **Charts Section** - Visual representations of mood and activity data
 
-#### Chart Types
-- **Line Charts:** Mood trends over daily/weekly/monthly periods
-- **Bar Charts:** Activity frequency and mood impact comparisons
-- **Heatmaps:** Daily mood patterns with intensity visualization
-- **Pie Charts:** Activity distribution and mood level breakdowns
+### Current Features
 
-#### Time Period Filtering
-- **Week View:** 7-day mood and activity trends
-- **Month View:** Monthly patterns and progression
-- **Year View:** Long-term trends and seasonal patterns
-- **Custom Ranges:** User-defined date ranges for specific analysis
+#### Summary Cards (1 card total)
+- **Average Mood** (😊) - Shows calculated average mood for selected period
 
-#### AI Diary Integration
-- **Diary Entry Display:** Show AI-generated diary content alongside statistics
-- **Insight Correlation:** Connect statistical patterns with diary insights
-- **Pattern Narratives:** AI-generated explanations of statistical trends
-- **Suggestion Integration:** Display AI suggestions based on statistical analysis
+**Note:** Previously included Current Streak (🔥), Total Entries (📝), and Top Activity (⭐) cards - these have been removed to simplify the interface and focus on the core mood metric.
 
-### Planned Methods
+#### AI Insights Section (positioned above charts)
+- **📖 AI Diary** - Template-based weekly summaries of mood patterns
+- **💡 Personalized Insights** - Generated insights based on user data patterns
 
-#### Visualization Generation
-- **renderMoodChart(timeframe):** Generate mood trend line charts
-- **renderActivityChart():** Create activity correlation visualizations
-- **renderSummaryStats():** Display key statistical metrics
-- **renderInsights():** Show AI-generated insights from data
+#### Charts Section 
+- **Mood Trends** - Line chart showing mood progression over time
+- **Mood Distribution** - Pie chart showing distribution of mood levels
 
-#### Data Processing
-- **processChartData(entries, timeframe):** Prepare data for chart libraries
-- **calculateTrends(data):** Compute trend lines and statistical summaries
-- **correlateActivitiesMood(entries):** Analyze activity-mood relationships
-- **generateInsights(statistics):** Create meaningful insights from raw statistics
+#### Time Period Controls
+- **Week/Month/Year toggles** - Filter data by time period
+- **Diary button** - Navigate to detailed diary view
+- **Export button** - Export data functionality
 
-#### User Interaction
-- **handleTimeframeChange(period):** Update charts based on selected time period
-- **handleChartInteraction(dataPoint):** Show details when user clicks chart elements
-- **handleExportChart():** Export charts as images or data files
-- **handleFilterChange(criteria):** Apply filters to statistical displays
+### Key Methods
 
-### Integration Points
-- **Storage.js:** Retrieves historical entry data for analysis
-- **Stats.js:** Uses statistical calculation functions
-- **AI-Diary.js:** Displays generated insights alongside charts
-- **App.js:** Integrates with main application navigation and state
+#### Core Functionality
+- **init(container, entries)** - Initialize component with data
+- **render()** - Generate HTML structure
+- **loadStats()** - Calculate and display statistics
+- **updateSummaryCards(stats)** - Update summary card values (only average mood)
 
-### Chart Library Integration
-Will likely integrate with charting libraries such as:
-- **Chart.js:** For responsive, interactive charts
-- **D3.js:** For custom, complex visualizations
-- **Recharts:** For React-like component-based charting
-- **Canvas API:** For custom drawing and visualizations
+#### Chart Rendering
+- **renderMoodTrendsChart(trends)** - Canvas-based line chart for mood trends
+- **renderMoodDistributionChart(distribution)** - Canvas-based pie chart for mood distribution
+- **drawChartBackground()** - Utility for chart axes and grid lines
 
-### Data Structure
-Expected statistics data format:
-```javascript
-{
-  moodTrends: [
-    { date: '2024-01-01', mood: 4, activities: ['work', 'exercise'] }
-  ],
-  activityCorrelations: {
-    'exercise': { averageMood: 4.2, frequency: 15 },
-    'work': { averageMood: 3.1, frequency: 20 }
-  },
-  summaryStats: {
-    averageMood: 3.8,
-    streak: 7,
-    mostCommonActivity: 'work',
-    bestMoodActivity: 'exercise'
-  }
-}
-```
+#### AI Content
+- **loadAIContent(stats)** - Load AI diary entries and personalized insights
 
-### CSS Dependencies
-Will require CSS classes:
-- `.stats-view-component` - Main container
-- `.chart-container` - Chart display areas
-- `.stats-summary` - Summary statistics display
-- `.time-filter` - Time period filter controls
-- `.insight-cards` - AI-generated insight displays
+#### Event Handling
+- **handlePeriodChange()** - Switch time periods (week/month/year)
+- **handleExport()** - Export data functionality
+- **handleDiaryView()** - Navigate to diary view
 
-### Accessibility Features
-- **Screen Reader Support:** Chart data available in tabular format
-- **Keyboard Navigation:** Navigate through chart elements and controls
-- **Color-Blind Friendly:** Charts use patterns and shapes alongside colors
-- **High Contrast Mode:** Alternative styling for visual accessibility
+### Data Integration
+- **Storage.js** - Retrieves historical entry data
+- **Stats.js** - Statistical calculation functions (trends, patterns, distributions)
+- **AI-Diary.js** - Template-based diary and insight generation
+- **Config.js** - Mood and activity configuration data
 
-### Future Features
-- **Comparative Analysis:** Compare current period to previous periods
-- **Goal Tracking:** Visualize progress toward mood and activity goals
-- **Prediction Models:** Simple trend predictions based on historical data
-- **Export Capabilities:** Export charts and insights for sharing or printing
+### Canvas-Based Charts
+Uses native HTML5 Canvas API for all chart rendering:
+- Custom line charts with data points and trend lines
+- Pie charts with percentage labels and mood-based colors
+- Consistent styling using CSS custom properties
 
-This component will transform raw tracking data into meaningful visual insights to help users understand their emotional patterns and the effectiveness of different activities.
+### CSS Dependencies  
+Uses global CSS variables (following project :root pattern):
+- `--primary-color` - Chart line and accent colors
+- `--success-color` - Positive activity impact bars
+- `--danger-color` - Negative activity impact bars  
+- `--text-primary` - Chart labels and text
+- `--border-color` - Chart axes and grid lines
+
+### Event System
+Emits custom events for component communication:
+- `stats-view-ready` - Component initialization complete
+- `export-requested` - User requests data export
+- `navigate` - Navigation to diary view
+
+### Error Handling
+- **showEmptyState()** - Display when no data available
+- **showErrorState()** - Display when loading fails
+- **destroy()** - Cleanup method for component removal
+
+### Current Layout Order
+1. Summary Cards (Average Mood only)
+2. AI Insights (📖 AI Diary, 💡 Personalized Insights) 
+3. Charts (Mood Trends, Mood Distribution)
+
+This minimal layout focuses on the essential mood metric while prioritizing AI-generated insights over raw statistical charts, creating a clean and actionable user interface with only the most relevant visualizations.

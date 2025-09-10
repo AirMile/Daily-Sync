@@ -188,9 +188,29 @@ function generateQuestionInsight(questions, responses) {
         return "I took time for self-reflection.";
     }
 
+    // Try to incorporate actual responses into the insight
+    const firstResponse = responses[0];
+    if (firstResponse && firstResponse.length > 20) {
+        // Use part of the actual response if it's substantial
+        const responseSnippet = firstResponse.length > 60 
+            ? firstResponse.substring(0, 57) + "..." 
+            : firstResponse;
+        
+        const contextualPhrases = [
+            `I reflected deeply on this: "${responseSnippet}"`,
+            `An important realization came to me: "${responseSnippet}"`,
+            `I found myself thinking: "${responseSnippet}"`,
+            `Today I acknowledged that ${responseSnippet.toLowerCase()}.`,
+            `Something that stood out to me: "${responseSnippet}"`
+        ];
+        
+        return contextualPhrases[Math.floor(Math.random() * contextualPhrases.length)];
+    }
+
+    // Fallback to generic insights if responses are too short
     const insights = [
         "My reflections revealed some important insights.",
-        "I discovered something meaningful about myself today.",
+        "I discovered something meaningful about myself today.", 
         "Taking time to answer deep questions helped me understand myself better.",
         "My inner thoughts showed me new perspectives.",
         "I gained clarity through thoughtful self-examination.",

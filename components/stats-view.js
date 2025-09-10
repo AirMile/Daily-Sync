@@ -70,26 +70,17 @@ export class StatsView {
                                 <div class="card-label">Average Mood</div>
                             </div>
                         </div>
-                        <div class="summary-card">
-                            <div class="card-icon">🔥</div>
-                            <div class="card-content">
-                                <div class="card-value" id="current-streak">-</div>
-                                <div class="card-label">Current Streak</div>
-                            </div>
+                    </div>
+
+                    <!-- AI Insights Section -->
+                    <div class="insights-section">
+                        <div class="ai-diary-container">
+                            <h3 class="section-title">📖 AI Diary</h3>
+                            <div class="diary-content" id="diary-content">Loading diary entries...</div>
                         </div>
-                        <div class="summary-card">
-                            <div class="card-icon">📝</div>
-                            <div class="card-content">
-                                <div class="card-value" id="total-entries">-</div>
-                                <div class="card-label">Total Entries</div>
-                            </div>
-                        </div>
-                        <div class="summary-card">
-                            <div class="card-icon">⭐</div>
-                            <div class="card-content">
-                                <div class="card-value" id="best-activity">-</div>
-                                <div class="card-label">Top Activity</div>
-                            </div>
+                        <div class="insights-container">
+                            <h3 class="section-title">💡 Personalized Insights</h3>
+                            <div class="insights-list" id="insights-list">Loading insights...</div>
                         </div>
                     </div>
 
@@ -104,23 +95,6 @@ export class StatsView {
                             <h3 class="chart-title">Mood Distribution</h3>
                             <canvas id="mood-distribution-chart" width="400" height="300"></canvas>
                             <div class="chart-info" id="distribution-chart-info">Loading...</div>
-                        </div>
-                        <div class="chart-container full-width">
-                            <h3 class="chart-title">Activity Impact</h3>
-                            <canvas id="activity-chart" width="800" height="300"></canvas>
-                            <div class="chart-info" id="activity-chart-info">Loading...</div>
-                        </div>
-                    </div>
-
-                    <!-- AI Insights Section -->
-                    <div class="insights-section">
-                        <div class="ai-diary-container">
-                            <h3 class="section-title">📖 AI Diary</h3>
-                            <div class="diary-content" id="diary-content">Loading diary entries...</div>
-                        </div>
-                        <div class="insights-container">
-                            <h3 class="section-title">💡 Personalized Insights</h3>
-                            <div class="insights-list" id="insights-list">Loading insights...</div>
                         </div>
                     </div>
                 </div>
@@ -138,7 +112,6 @@ export class StatsView {
             // Calculate statistics
             const summaryStats = generateSummaryStats(this.data);
             const moodTrends = calculateMoodTrends(this.data, this.currentPeriod);
-            const activityPatterns = analyzeActivityPatterns(this.data);
             const moodDistribution = getMoodDistribution(this.data);
 
             // Update summary cards
@@ -147,7 +120,6 @@ export class StatsView {
             // Render charts
             this.renderMoodTrendsChart(moodTrends);
             this.renderMoodDistributionChart(moodDistribution);
-            this.renderActivityImpactChart(activityPatterns);
 
             // Load AI content
             await this.loadAIContent(summaryStats);
@@ -160,28 +132,8 @@ export class StatsView {
 
     updateSummaryCards(stats) {
         const avgMoodEl = document.getElementById('avg-mood');
-        const streakEl = document.getElementById('current-streak');
-        const entriesEl = document.getElementById('total-entries');
-        const activityEl = document.getElementById('best-activity');
 
         if (avgMoodEl) avgMoodEl.textContent = stats.averageMood || '-';
-        if (streakEl) streakEl.textContent = stats.streakInfo?.current || '-';
-        if (entriesEl) entriesEl.textContent = stats.totalEntries || '-';
-        
-        if (activityEl && stats.bestMoodActivity) {
-            const allActivities = [
-                ...ACTIVITIES.emotions,
-                ...ACTIVITIES.health,
-                ...ACTIVITIES.hobbies,
-                ...ACTIVITIES.social,
-                ...ACTIVITIES.work,
-                ...ACTIVITIES.lifestyle
-            ];
-            const activity = allActivities.find(a => a.id === stats.bestMoodActivity);
-            activityEl.textContent = activity ? activity.label : 'Unknown';
-        } else if (activityEl) {
-            activityEl.textContent = '-';
-        }
     }
 
     renderMoodTrendsChart(trends) {
@@ -309,94 +261,6 @@ export class StatsView {
         }
     }
 
-    renderActivityImpactChart(patterns) {
-        const canvas = document.getElementById('activity-chart');
-        if (!canvas || !patterns.topPositive.length) return;
-
-        const ctx = canvas.getContext('2d');
-        const { width, height } = canvas;
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
-        
-        // Chart configuration
-        const padding = 80;
-        const chartWidth = width - 2 * padding;
-        const chartHeight = height - 2 * padding;
-        
-        // Combine top positive and negative activities
-        const activities = [...patterns.topPositive.slice(0, 5), ...patterns.topNegative.slice(0, 3)];
-        if (activities.length === 0) return;
-        
-        const barWidth = chartWidth / activities.length * 0.8;
-        const barSpacing = chartWidth / activities.length * 0.2;
-        
-        const maxMood = Math.max(...activities.map(a => a.averageMood));
-        const minMood = Math.min(...activities.map(a => a.averageMood));
-        const moodRange = maxMood - minMood || 1;
-        
-        // Draw background
-        this.drawChartBackground(ctx, padding, chartWidth, chartHeight, minMood, maxMood);
-        
-        // Draw bars
-        activities.forEach((activity, index) => {
-            const x = padding + index * (barWidth + barSpacing);
-            const normalizedMood = (activity.averageMood - minMood) / moodRange;
-            const barHeight = normalizedMood * chartHeight;
-            const y = padding + chartHeight - barHeight;
-            
-            // Color based on impact
-            ctx.fillStyle = activity.impact === 'positive' ? 
-                getComputedStyle(document.documentElement).getPropertyValue('--success-color') || '#10B981' :
-                activity.impact === 'negative' ?
-                getComputedStyle(document.documentElement).getPropertyValue('--danger-color') || '#EF4444' :
-                getComputedStyle(document.documentElement).getPropertyValue('--text-muted') || '#94A3B8';
-            
-            ctx.fillRect(x, y, barWidth, barHeight);
-            
-            // Draw activity label
-            const allActivities = [
-                ...ACTIVITIES.emotions,
-                ...ACTIVITIES.health,
-                ...ACTIVITIES.hobbies,
-                ...ACTIVITIES.social,
-                ...ACTIVITIES.work,
-                ...ACTIVITIES.lifestyle
-            ];
-            const activityConfig = allActivities.find(a => a.id === activity.activityId);
-            const label = activityConfig ? activityConfig.label : activity.activityId;
-            
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#1E293B';
-            ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.save();
-            ctx.translate(x + barWidth/2, padding + chartHeight + 20);
-            ctx.rotate(-Math.PI/4);
-            ctx.fillText(label.length > 10 ? label.substring(0, 8) + '...' : label, 0, 0);
-            ctx.restore();
-        });
-
-        // Update chart info
-        const infoEl = document.getElementById('activity-chart-info');
-        if (infoEl && activities.length > 0) {
-            const best = activities.find(a => a.impact === 'positive');
-            if (best) {
-                const allActivities = [
-                    ...ACTIVITIES.emotions,
-                    ...ACTIVITIES.health,
-                    ...ACTIVITIES.hobbies,
-                    ...ACTIVITIES.social,
-                    ...ACTIVITIES.work,
-                    ...ACTIVITIES.lifestyle
-                ];
-                const activityConfig = allActivities.find(a => a.id === best.activityId);
-                const label = activityConfig ? activityConfig.label : best.activityId;
-                infoEl.textContent = `Highest impact: ${label} (${best.averageMood} avg mood)`;
-            } else {
-                infoEl.textContent = 'Activity impact analysis';
-            }
-        }
-    }
 
     drawChartBackground(ctx, padding, chartWidth, chartHeight, minValue, maxValue) {
         // Draw axes
