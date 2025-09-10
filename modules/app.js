@@ -5,6 +5,8 @@ import storageManager from './storage.js';
 import { MoodSelector } from '../components/mood-selector.js';
 import { ActivitySelector } from '../components/activity-selector.js';
 import { QuestionCard } from '../components/question-card.js';
+import { StatsView } from '../components/stats-view.js';
+import { DiaryView } from '../components/diary-view.js';
 
 class DailySyncApp {
     constructor() {
@@ -21,7 +23,9 @@ class DailySyncApp {
         this.components = {
             moodSelector: null,
             activitySelector: null,
-            questionCard: null
+            questionCard: null,
+            statsView: null,
+            diaryView: null
         };
         
         this.routes = {
@@ -139,9 +143,9 @@ class DailySyncApp {
         await storageManager.saveEntry(this.state.currentEntry);
         await this.updateStreak();
         
-        // Reset current entry and go to diary view
+        // Reset current entry and go to statistics view
         this.state.currentEntry = null;
-        this.navigateTo('diary');
+        this.navigateTo('stats');
     }
     
     async handleQuestionsAutoSaved(event) {
@@ -357,49 +361,102 @@ class DailySyncApp {
         this.components.activitySelector.show();
     }
     
-    showDiaryView() {
+    async showDiaryView() {
         const viewContainer = document.getElementById('view-container');
-        viewContainer.innerHTML = `
-            <div class="diary-view">
-                <h2>Great job! 🎉</h2>
-                <p>Thank you for completing your daily check-in!</p>
-                <div class="diary-content">
-                    <div class="entry-summary">
-                        <p>Your entry has been saved and added to your personal diary.</p>
-                        <div class="completion-badge">
-                            <span class="badge-icon">✓</span>
-                            <span>Day ${this.state.streak} Complete!</span>
-                        </div>
-                    </div>
-                </div>
-                <button class="primary-btn back-home-btn">
-                    Back to home
-                </button>
-            </div>
-        `;
         
-        // Bind back button
-        viewContainer.querySelector('.back-home-btn').addEventListener('click', () => {
-            this.navigateTo('home');
-        });
-        
-        this.hideAllComponents();
+        try {
+            // Load all entries for diary view
+            const entries = await storageManager.getAllEntries();
+            
+            // Initialize diary view component if not exists
+            if (!this.components.diaryView) {
+                viewContainer.innerHTML = '<div id="diary-view-container"></div>';
+                const container = document.getElementById('diary-view-container');
+                this.components.diaryView = new DiaryView();
+                await this.components.diaryView.init(container, entries);
+            } else {
+                // Update existing diary view with latest entries
+                this.components.diaryView.updateEntries(entries);
+            }
+            
+            this.hideAllComponents();
+            this.components.diaryView.show();
+            
+        } catch (error) {
+            console.error('Error loading diary view:', error);
+            this.handleError(error);
+        }
     }
     
-    showStatsView() {
+    async showStatsView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        try {
+            // Load all entries for statistics
+            const entries = await storageManager.getAllEntries();
+            
+            // Initialize stats view component if not exists
+            if (!this.components.statsView) {
+                viewContainer.innerHTML = '<div id="stats-view-container"></div>';
+                const container = document.getElementById('stats-view-container');
+                this.components.statsView = new StatsView();
+                
+                // Setup export event listener
+                container.addEventListener('export-requested', (event) => {
+                    this.handleExportRequest(event.detail);
+                });
+            }
+            
+            // Hide other components
+            this.hideAllComponents();
+            
+            // Initialize stats view with data
+            const container = document.getElementById('stats-view-container');
+            await this.components.statsView.init(container, entries);
+            
+        } catch (error) {
+            console.error('Error loading stats view:', error);
+            this.showStatsError();
+        }
+    }
+    
+    async handleExportRequest(exportDetails) {
+        try {
+            const { format } = exportDetails;
+            
+            if (format === 'csv') {
+                const success = await storageManager.downloadExport('csv');
+                if (!success) {
+                    alert('Failed to export data as CSV. Please try again.');
+                }
+            } else {
+                const success = await storageManager.downloadExport('json');
+                if (!success) {
+                    alert('Failed to export data as JSON. Please try again.');
+                }
+            }
+        } catch (error) {
+            console.error('Error during export:', error);
+            alert('Export failed. Please try again.');
+        }
+    }
+    
+    showStatsError() {
         const viewContainer = document.getElementById('view-container');
         viewContainer.innerHTML = `
             <div class="stats-view">
-                <h2>Your statistics</h2>
-                <p>Coming soon: your mood trends and insights.</p>
-                <div class="stats-placeholder">
-                    <p>Statistics will be implemented in Phase 3</p>
-                    <div class="placeholder-icon">📊</div>
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h3 class="error-title">Error Loading Statistics</h3>
+                    <p class="error-description">
+                        There was a problem loading your statistics. Please try refreshing the page.
+                    </p>
+                    <button class="error-action" onclick="location.reload()">
+                        Refresh Page
+                    </button>
                 </div>
             </div>
         `;
-        
-        this.hideAllComponents();
     }
     
     createNewEntry() {
@@ -484,6 +541,10 @@ class DailySyncApp {
         if (this.components.questionCard) {
             this.components.questionCard.hide();
         }
+        if (this.components.diaryView) {
+            this.components.diaryView.hide();
+        }
+        // StatsView doesn't have a hide method - it manages its own container
     }
     
     destroyAllComponents() {
@@ -497,7 +558,8 @@ class DailySyncApp {
         this.components = {
             moodSelector: null,
             activitySelector: null,
-            questionCard: null
+            questionCard: null,
+            statsView: null
         };
     }
 
