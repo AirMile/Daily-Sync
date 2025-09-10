@@ -185,6 +185,13 @@ class DailySyncApp {
             return;
         }
         
+        // Clear localStorage when navigating to home (reset app state)
+        if (viewName === 'home') {
+            localStorage.clear();
+            this.state.currentEntry = null;
+            this.destroyAllComponents();
+        }
+        
         // Update state
         const previousView = this.state.currentView;
         this.setState({ currentView: viewName });

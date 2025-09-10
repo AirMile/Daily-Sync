@@ -55,19 +55,20 @@ export class ActivitySelector {
                     `).join('')}
                 </div>
                 
-                <div class="custom-activity-section">
-                    <div class="custom-activity-input">
-                        <input 
-                            type="text" 
-                            placeholder="Add custom activity..." 
-                            class="custom-activity-field"
-                            maxlength="50"
-                        >
-                        <button class="add-custom-btn" title="Add custom activity">
-                            <span>+</span>
-                        </button>
+                <div class="notes-section">
+                    <div class="notes-header">
+                        <h3>Notes</h3>
+                        <p>Add any thoughts about your day</p>
                     </div>
-                    <div class="custom-activities-list"></div>
+                    <textarea 
+                        class="notes-field" 
+                        placeholder="What's on your mind today? How are you feeling?"
+                        maxlength="500"
+                        rows="4"
+                    ></textarea>
+                    <div class="notes-counter">
+                        <small><span class="char-count">0</span>/500 characters</small>
+                    </div>
                 </div>
                 
                 <div class="activity-summary">
@@ -100,17 +101,13 @@ export class ActivitySelector {
             button.addEventListener('click', (e) => this.handleActivitySelection(e));
         });
         
-        // Custom activity input
-        const customInput = this.container.querySelector('.custom-activity-field');
-        const addBtn = this.container.querySelector('.add-custom-btn');
+        // Notes input
+        const notesField = this.container.querySelector('.notes-field');
+        const charCount = this.container.querySelector('.char-count');
         
-        customInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleAddCustomActivity();
-            }
+        notesField.addEventListener('input', (e) => {
+            charCount.textContent = e.target.value.length;
         });
-        
-        addBtn.addEventListener('click', () => this.handleAddCustomActivity());
         
         // Action buttons
         this.container.querySelector('.clear-selection-btn').addEventListener('click', () => {
@@ -203,64 +200,6 @@ export class ActivitySelector {
         this.updateContinueButton();
     }
     
-    handleAddCustomActivity() {
-        const input = this.container.querySelector('.custom-activity-field');
-        const customText = input.value.trim();
-        
-        if (!customText) return;
-        
-        // Create unique ID for custom activity
-        const customId = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        
-        // Add to selected activities
-        this.selectedActivities.add(customId);
-        
-        // Create button in custom activities list
-        const customList = this.container.querySelector('.custom-activities-list');
-        const customButton = document.createElement('button');
-        customButton.className = 'activity-button custom-activity selected';
-        customButton.setAttribute('data-activity', customId);
-        customButton.setAttribute('data-category', 'custom');
-        customButton.setAttribute('aria-pressed', 'true');
-        customButton.innerHTML = `
-            <span class="activity-emoji">✨</span>
-            <span class="activity-label">${customText}</span>
-            <span class="activity-checkmark">✓</span>
-            <button class="remove-custom" title="Remove custom activity">×</button>
-        `;
-        
-        // Add event listeners to custom button
-        customButton.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-custom')) {
-                this.removeCustomActivity(customId);
-            } else {
-                this.handleActivitySelection(e);
-            }
-        });
-        
-        customList.appendChild(customButton);
-        
-        // Clear input
-        input.value = '';
-        
-        // Update UI
-        this.updateSummary();
-        this.updateContinueButton();
-        
-        // Focus back to input for easy addition of more activities
-        input.focus();
-    }
-    
-    removeCustomActivity(activityId) {
-        this.selectedActivities.delete(activityId);
-        const button = this.container.querySelector(`[data-activity="${activityId}"]`);
-        if (button) {
-            button.remove();
-        }
-        
-        this.updateSummary();
-        this.updateContinueButton();
-    }
     
     updateSummary() {
         const countSpan = this.container.querySelector('.selected-count .count');
@@ -299,19 +238,6 @@ export class ActivitySelector {
     }
     
     findActivityById(activityId) {
-        // Check custom activities first
-        if (activityId.startsWith('custom_')) {
-            const customButton = this.container.querySelector(`[data-activity="${activityId}"]`);
-            if (customButton) {
-                return {
-                    id: activityId,
-                    label: customButton.querySelector('.activity-label').textContent,
-                    emoji: '✨',
-                    color: '#8B5CF6'
-                };
-            }
-        }
-        
         // Check regular activities
         for (const [categoryName, activities] of Object.entries(ACTIVITIES)) {
             const activity = activities.find(a => a.id === activityId);
@@ -333,8 +259,9 @@ export class ActivitySelector {
             button.setAttribute('aria-pressed', 'false');
         });
         
-        // Remove custom activities
-        this.container.querySelector('.custom-activities-list').innerHTML = '';
+        // Clear notes
+        this.container.querySelector('.notes-field').value = '';
+        this.container.querySelector('.char-count').textContent = '0';
         
         this.updateSummary();
         this.updateContinueButton();
@@ -360,12 +287,6 @@ export class ActivitySelector {
             document.activeElement.click();
         }
         
-        // Enter in custom input
-        if (key === 'Enter' && 
-            document.activeElement === this.container.querySelector('.custom-activity-field')) {
-            event.preventDefault();
-            this.handleAddCustomActivity();
-        }
         
         // Escape to clear all
         if (key === 'Escape') {
@@ -385,15 +306,20 @@ export class ActivitySelector {
                 label: activity.label,
                 emoji: activity.emoji,
                 color: activity.color,
-                category: activityId.startsWith('custom_') ? 'custom' : this.findActivityCategory(activityId)
+                category: this.findActivityCategory(activityId)
             } : null;
         }).filter(Boolean);
+        
+        // Get notes data
+        const notesField = this.container.querySelector('.notes-field');
+        const notes = notesField ? notesField.value.trim() : '';
         
         // Emit custom event
         const event = new CustomEvent('activities-selected', {
             detail: {
                 activities: selectedActivityData,
-                count: this.selectedActivities.size
+                count: this.selectedActivities.size,
+                notes: notes
             },
             bubbles: true
         });

@@ -111,7 +111,7 @@ export class QuestionCard {
         this.container.querySelector('.previous-btn').addEventListener('click', () => {
             if (this.currentQuestionIndex === 0) {
                 // Go back to mood selection
-                this.handleBackToMood();
+                this.handleBackToActivities();
             } else {
                 // Navigate to previous question
                 this.navigateToQuestion(this.currentQuestionIndex - 1);
@@ -208,7 +208,7 @@ export class QuestionCard {
         
         // Change text based on whether we're on first question or not
         if (this.currentQuestionIndex === 0) {
-            prevBtn.innerHTML = '<span>← Back to Mood</span>';
+            prevBtn.innerHTML = '<span>← Back to Activities</span>';
         } else {
             prevBtn.innerHTML = '<span>← Previous</span>';
         }
@@ -391,11 +391,11 @@ export class QuestionCard {
         }, 50);
     }
     
-    handleBackToMood() {
-        // Emit custom event to navigate back to mood selection
+    handleBackToActivities() {
+        // Emit custom event to navigate back to activity selection
         const event = new CustomEvent('navigate', {
             detail: {
-                route: 'mood'
+                route: 'activities'
             },
             bubbles: true
         });
@@ -414,7 +414,7 @@ export class QuestionCard {
                 event.preventDefault();
                 if (this.currentQuestionIndex === 0) {
                     // Go back to mood selection
-                    this.handleBackToMood();
+                    this.handleBackToActivities();
                 } else {
                     // Navigate to previous question
                     this.navigateToQuestion(this.currentQuestionIndex - 1);

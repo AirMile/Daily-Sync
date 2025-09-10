@@ -666,72 +666,62 @@ body {
     display: flex;
 }
 
-.custom-activity-section {
+.notes-section {
     margin: var(--spacing-6) 0;
     padding: var(--spacing-4);
     background: var(--bg-color);
     border-radius: var(--radius-lg);
 }
 
-.custom-activity-input {
-    display: flex;
-    gap: var(--spacing-2);
-    margin-bottom: var(--spacing-4);
+.notes-header {
+    margin-bottom: var(--spacing-3);
 }
 
-.custom-activity-field {
-    flex: 1;
+.notes-header h3 {
+    margin: 0 0 var(--spacing-1) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.notes-header p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.notes-field {
+    width: 100%;
     padding: var(--spacing-3);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     font-family: var(--font-family);
     font-size: var(--font-size-base);
+    resize: vertical;
+    min-height: 100px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    line-height: 1.5;
 }
 
-.custom-activity-field:focus {
+.notes-field:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
 }
 
-.add-custom-btn {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: var(--spacing-3) var(--spacing-4);
-    font-size: var(--font-size-lg);
-    cursor: pointer;
-    transition: background-color var(--transition-fast);
+.notes-field::placeholder {
+    color: var(--text-secondary);
 }
 
-.add-custom-btn:hover {
-    background-color: #3B82F6;
+.notes-counter {
+    margin-top: var(--spacing-2);
+    text-align: right;
 }
 
-.custom-activities-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--spacing-3);
-}
-
-.remove-custom {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: var(--danger-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
+.notes-counter small {
+    color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    cursor: pointer;
-    display: none;
-}
-
-.custom-activity:hover .remove-custom {
-    display: block;
 }
 
 .activity-summary {
