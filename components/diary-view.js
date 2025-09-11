@@ -1,5 +1,5 @@
-// Diary view UI component - displays extended Q&A entries and detailed reflections
-// Shows complete daily entries with questions, answers, mood, and activities in journal format
+// Diary view UI component - displays AI-generated daily diary summaries
+// Shows personalized diary entries that weave together mood, activities, and reflections
 import { MOODS, ACTIVITIES } from '../modules/config.js';
 
 export class DiaryView {
@@ -37,7 +37,7 @@ export class DiaryView {
                         <button class="back-btn" title="Back to Statistics">
                             ← 📊 Statistics
                         </button>
-                        <h2 class="diary-title">📖 Personal Diary</h2>
+                        <h2 class="diary-title">📖 AI Diary</h2>
                     </div>
                     <div class="diary-controls">
                         <div class="period-selector">
@@ -163,7 +163,7 @@ export class DiaryView {
     }
 
     renderEntry(entry) {
-        if (!entry.completed || !entry.questions || !entry.answers) {
+        if (!entry.completed) {
             return ''; // Skip incomplete entries
         }
 
@@ -183,26 +183,8 @@ export class DiaryView {
         const moodData = this.getMoodData(entry.mood);
         const moodDisplay = moodData ? `${moodData.emoji} ${moodData.label}` : 'Unknown mood';
 
-        // Get activities
-        const activitiesDisplay = this.getActivitiesDisplay(entry.activities);
-
-        // Render questions and answers
-        const questionsHTML = entry.questions.map((question, index) => {
-            const answer = entry.answers[question.id] || '';
-            if (!answer.trim()) return ''; // Skip unanswered questions
-
-            return `
-                <div class="qa-pair">
-                    <div class="question">
-                        <span class="question-number">Q${index + 1}:</span>
-                        <span class="question-text">${question.text}</span>
-                    </div>
-                    <div class="answer">
-                        <p class="answer-text">${this.formatAnswer(answer)}</p>
-                    </div>
-                </div>
-            `;
-        }).filter(html => html).join('');
+        // Get the AI-generated diary text
+        const diaryText = entry.diaryText || entry.diaryEntry || this.generateFallbackDiary(entry);
 
         return `
             <div class="diary-entry">
@@ -216,24 +198,9 @@ export class DiaryView {
                     </div>
                 </div>
                 
-                <div class="entry-activities">
-                    <h4>Activities</h4>
-                    <div class="activities-list">${activitiesDisplay}</div>
+                <div class="entry-diary">
+                    <p class="diary-text">${diaryText}</p>
                 </div>
-
-                <div class="entry-reflections">
-                    <h4>Daily Reflections</h4>
-                    <div class="questions-answers">
-                        ${questionsHTML}
-                    </div>
-                </div>
-
-                ${entry.notes ? `
-                    <div class="entry-notes">
-                        <h4>Notes</h4>
-                        <p class="notes-text">${this.formatAnswer(entry.notes)}</p>
-                    </div>
-                ` : ''}
             </div>
         `;
     }
@@ -298,6 +265,25 @@ export class DiaryView {
                 </button>
             </div>
         `;
+    }
+
+    generateFallbackDiary(entry) {
+        // Generate a simple fallback diary entry if none exists
+        if (!entry.mood) {
+            return "Today I took time to check in with myself. Every moment of self-awareness is valuable.";
+        }
+        
+        const moodData = this.getMoodData(entry.mood);
+        const moodWord = moodData ? moodData.label.toLowerCase() : 'okay';
+        const moodEmoji = moodData ? moodData.emoji : '😐';
+        
+        if (entry.mood >= 4) {
+            return `Today was ${moodWord}! ${moodEmoji} I felt positive energy throughout the day and engaged in meaningful activities.`;
+        } else if (entry.mood >= 3) {
+            return `Today felt ${moodWord} and balanced ${moodEmoji}. I took time for self-reflection and stayed present with my experiences.`;
+        } else {
+            return `Today was challenging - feeling ${moodWord} ${moodEmoji}. I'm learning to be gentle with myself during difficult moments.`;
+        }
     }
 
     updateEntries(entries) {

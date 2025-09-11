@@ -6,26 +6,30 @@ import { MOODS, ACTIVITIES } from './config.js';
 const DIARY_TEMPLATES = Object.freeze({
     // High mood templates (4-5)
     positive: [
-        "Today was {moodWord}! I felt {moodEmoji} throughout the day. {activitySummary} {questionInsight} {encouragement}",
-        "What a {moodWord} day! {moodEmoji} {activitySummary} {questionInsight} I'm grateful for these positive moments.",
-        "Feeling {moodWord} today {moodEmoji}. {activitySummary} {questionInsight} {positiveReflection}",
-        "Today brought a sense of being {moodWord} {moodEmoji}. {activitySummary} {questionInsight} These are the days to remember!"
+        "Today was wonderfully {moodWord}! {moodEmoji} {activitySummary} {questionInsight} {encouragement}",
+        "What an energizing {moodWord} day! {moodEmoji} I found myself really enjoying {activitySummary} {questionInsight} These positive moments are exactly what I want to remember.",
+        "I'm feeling genuinely {moodWord} today {moodEmoji}. {activitySummary} {questionInsight} {positiveReflection}",
+        "Today brought such a beautiful sense of being {moodWord} {moodEmoji}. {activitySummary} When I reflected on my day, {questionInsight} Days like this remind me why life feels so full of possibility.",
+        "Such a {moodWord} day! {moodEmoji} {activitySummary} {questionInsight} I want to carry this energy into tomorrow.",
+        "Feeling incredibly {moodWord} today {moodEmoji}. {activitySummary} My heart feels full when I think about {questionInsight} These are the moments that make everything worthwhile."
     ],
     
     // Neutral mood templates (3)
     neutral: [
-        "Today was an okay day {moodEmoji}. {activitySummary} {questionInsight} {neutralReflection}",
-        "A steady, {moodWord} sort of day {moodEmoji}. {activitySummary} {questionInsight} Sometimes these balanced days are exactly what we need.",
-        "Feeling {moodWord} today {moodEmoji}. {activitySummary} {questionInsight} {neutralEncouragement}",
-        "Today felt {moodWord} and balanced {moodEmoji}. {activitySummary} {questionInsight} Progress comes in all forms."
+        "Today was a steady, {moodWord} kind of day {moodEmoji}. {activitySummary} {questionInsight} {neutralReflection}",
+        "I'm feeling {moodWord} and grounded today {moodEmoji}. {activitySummary} When I paused to think about it, {questionInsight} Sometimes these quiet, balanced days are exactly what my soul needs.",
+        "Today felt peacefully {moodWord} {moodEmoji}. {activitySummary} {questionInsight} {neutralEncouragement}",
+        "A {moodWord}, contemplative day {moodEmoji}. {activitySummary} I found myself appreciating {questionInsight} There's something beautiful about these gentle, in-between moments.",
+        "Today brought a sense of {moodWord} stability {moodEmoji}. {activitySummary} {questionInsight} I'm learning to value these calm, steady rhythms of life."
     ],
     
     // Low mood templates (1-2)
     negative: [
-        "Today was challenging - feeling {moodWord} {moodEmoji}. {activitySummary} {questionInsight} {supportiveMessage}",
-        "A tough day where I felt {moodWord} {moodEmoji}. {activitySummary} {questionInsight} Tomorrow is a new opportunity.",
-        "Struggled with feeling {moodWord} today {moodEmoji}. {activitySummary} {questionInsight} {selfCompassion}",
-        "Today I felt {moodWord} {moodEmoji}. {activitySummary} {questionInsight} It's okay to have difficult days."
+        "Today was challenging - I've been feeling {moodWord} {moodEmoji}. Even so, {activitySummary} When I reflected on my day, {questionInsight} {supportiveMessage}",
+        "This was a tough day where I felt {moodWord} {moodEmoji}. Despite the difficulties, {activitySummary} {questionInsight} I'm reminding myself that tomorrow brings new possibilities.",
+        "I struggled with feeling {moodWord} today {moodEmoji}. {activitySummary} In quiet moments, {questionInsight} {selfCompassion}",
+        "Today my heart felt {moodWord} {moodEmoji}. {activitySummary} {questionInsight} I'm learning that difficult days are part of my human experience, and that's completely okay.",
+        "A {moodWord} day that asked a lot of me {moodEmoji}. {activitySummary} {questionInsight} I'm proud of myself for showing up, even when it felt hard."
     ]
 });
 
@@ -138,7 +142,7 @@ export function generateDiaryEntry(entry) {
  */
 function generateActivitySummary(activityIds) {
     if (!activityIds || activityIds.length === 0) {
-        return "I spent time reflecting on my day.";
+        return "I took time for quiet reflection.";
     }
 
     // Get activity labels
@@ -157,24 +161,39 @@ function generateActivitySummary(activityIds) {
     }).filter(Boolean);
 
     if (activityLabels.length === 0) {
-        return "I engaged in various activities.";
+        return "I found meaning in the simple moments of my day.";
     }
 
+    const templates = {
+        single: [
+            `I spent meaningful time with ${activityLabels[0]}.`,
+            `${activityLabels[0]} filled an important part of my day.`,
+            `I found joy in ${activityLabels[0]} today.`,
+            `${activityLabels[0]} brought me a sense of connection to myself.`
+        ],
+        double: [
+            `I wove together ${activityLabels[0]} and ${activityLabels[1]} in beautiful ways.`,
+            `My day was enriched by both ${activityLabels[0]} and ${activityLabels[1]}.`,
+            `I found a lovely rhythm between ${activityLabels[0]} and ${activityLabels[1]}.`,
+            `${activityLabels[0]} and ${activityLabels[1]} both nourished different parts of me.`
+        ],
+        multiple: [
+            `My day flowed between ${activityLabels.slice(0, 2).join(', ')}, and ${activityLabels.length > 2 ? 'other meaningful experiences' : activityLabels[2]}.`,
+            `I felt grateful for the variety in my day - from ${activityLabels.slice(0, 2).join(' to ')}, and beyond.`,
+            `There was something special about moving between ${activityLabels.slice(0, 2).join(', ')}, and the other activities that filled my day.`,
+            `I appreciated how ${activityLabels.slice(0, 3).join(', ')} each added their own texture to my experience.`
+        ]
+    };
+
     if (activityLabels.length === 1) {
-        return `I spent time with ${activityLabels[0]}.`;
+        return templates.single[Math.floor(Math.random() * templates.single.length)];
     }
 
     if (activityLabels.length === 2) {
-        return `I experienced ${activityLabels[0]} and ${activityLabels[1]}.`;
+        return templates.double[Math.floor(Math.random() * templates.double.length)];
     }
 
-    if (activityLabels.length <= 4) {
-        const lastActivity = activityLabels.pop();
-        return `I engaged with ${activityLabels.join(', ')}, and ${lastActivity}.`;
-    }
-
-    // For many activities
-    return `I had a full day with ${activityLabels.slice(0, 3).join(', ')}, and several other activities.`;
+    return templates.multiple[Math.floor(Math.random() * templates.multiple.length)];
 }
 
 /**

@@ -62,16 +62,15 @@ class DailySyncApp {
             // Setup event listeners
             this.setupEventListeners();
             
-            // Check for unfinished entry
+            // Check for unfinished entry but don't auto-navigate
             const unfinishedEntry = await storageManager.getUnfinishedEntry();
             if (unfinishedEntry) {
                 this.state.currentEntry = unfinishedEntry;
-                this.navigateTo('questions');
-            } else {
-                // Check current route from URL
-                const currentRoute = this.getCurrentRoute();
-                this.navigateTo(currentRoute);
             }
+            
+            // Always check current route from URL (don't bypass home page)
+            const currentRoute = this.getCurrentRoute();
+            this.navigateTo(currentRoute);
             
         } catch (error) {
             this.handleError(error);

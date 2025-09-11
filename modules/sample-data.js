@@ -113,27 +113,40 @@ export function generateSampleEntries(daysBack = 35) {
             responses.push(response);
         }
         
-        // Create entry object with proper timestamp fields
+        // Map responses to answers object for consistency
+        const answers = {};
+        selectedQuestions.forEach((question, index) => {
+            answers[question.id] = responses[index];
+        });
+        
+        // Create entry object with consistent field naming
         const entry = {
-            id: `sample_${Date.now()}_${i}`,
+            id: `sample_${entryDate.getTime()}_${Math.random().toString(36).substr(2, 9)}`,
             date: entryDate.toISOString(),
-            timestamp: entryDate.getTime(), // Add timestamp in milliseconds
-            completedAt: entryDate.getTime(), // Add completedAt for diary view
+            timestamp: entryDate.getTime(),
+            completedAt: entryDate.getTime(),
             mood: finalMood,
+            moodData: {
+                value: finalMood,
+                label: `Mood ${finalMood}`,
+                emoji: finalMood >= 4 ? '😊' : finalMood >= 3 ? '😐' : '😞',
+                color: `var(--mood-${finalMood})`
+            },
             activities: selectedActivities,
+            activityCount: selectedActivities.length,
             questions: selectedQuestions,
-            responses: responses,
-            answers: {}, // Map responses to question IDs for compatibility
+            answers: answers,
             completed: true
         };
         
-        // Map responses to answers object for storage compatibility
-        selectedQuestions.forEach((question, index) => {
-            entry.answers[question.id] = responses[index];
-        });
+        // Add activity notes for richer diary content (simulate user notes)
+        const activityNotes = generateActivityNotes(selectedActivities, finalMood);
+        entry.notes = activityNotes;
         
-        // Generate diary entry
-        entry.diaryEntry = generateDiaryEntry(entry);
+        // Generate diary entry and store consistently
+        const diaryText = generateDiaryEntry(entry);
+        entry.diaryText = diaryText;
+        entry.diaryEntry = diaryText; // Backwards compatibility
         
         entries.push(entry);
     }
@@ -342,6 +355,55 @@ export function calculateSampleStats(entries) {
  * @param {Array} entries - Sample entries
  * @returns {string} JSON string of sample data
  */
+/**
+ * Generate realistic activity notes for sample data
+ * @param {Array} activityIds - Array of selected activity IDs
+ * @param {number} mood - Current mood level (1-5)
+ * @returns {string} Generated activity notes
+ */
+function generateActivityNotes(activityIds, mood) {
+    if (!activityIds || activityIds.length === 0) {
+        return '';
+    }
+
+    const noteTemplates = {
+        positive: [
+            "Feeling really grateful for this time today. It filled my cup in just the right way.",
+            "This was exactly what I needed. So glad I made time for it.",
+            "There's something magical about days like this. I want to remember this feeling.",
+            "I felt so present and connected during these activities. Beautiful day overall.",
+            "These moments reminded me what brings me joy. More of this, please!",
+            "I could feel my energy lifting throughout the day. Such a gift."
+        ],
+        neutral: [
+            "A quiet, steady day. Sometimes these calm moments are exactly what I need.",
+            "Not every day needs to be extraordinary. Finding peace in the ordinary today.",
+            "Taking things one step at a time. Grateful for this gentle pace.",
+            "Simple pleasures today. There's beauty in these quiet rhythms.",
+            "Feeling balanced and grounded. These activities help me stay centered.",
+            "A day of small, meaningful moments. They add up to something beautiful."
+        ],
+        challenging: [
+            "Even though today was tough, I'm proud I showed up for these activities.",
+            "These activities were a bright spot in a difficult day. Grateful for that.",
+            "Finding small pockets of peace even when things feel hard. That's growth.",
+            "Giving myself credit for doing what I could today, even when it wasn't easy.",
+            "Some days are about just showing up. Today was one of those days, and that's okay.",
+            "These activities reminded me that I can find moments of calm even in the storm."
+        ]
+    };
+
+    const category = mood >= 4 ? 'positive' : mood >= 3 ? 'neutral' : 'challenging';
+    const templates = noteTemplates[category];
+    
+    // 70% chance of having notes
+    if (Math.random() < 0.7) {
+        return templates[Math.floor(Math.random() * templates.length)];
+    }
+    
+    return '';
+}
+
 export function exportSampleDataAsJSON(entries) {
     const stats = calculateSampleStats(entries);
     

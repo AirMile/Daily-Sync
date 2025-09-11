@@ -306,25 +306,25 @@ export class StatsView {
         const diaryEl = document.getElementById('diary-content');
         const insightsEl = document.getElementById('insights-list');
         
+        // Always show sample diary entry for demo purposes
+        if (diaryEl) {
+            diaryEl.innerHTML = `
+                <div class="diary-entry">
+                    <div class="diary-header">
+                        <span class="diary-date">Today</span>
+                        <span class="diary-mood">😊 Good</span>
+                    </div>
+                    <div class="diary-text">Today was wonderfully good! 😊 I wove together walking and creative work in beautiful ways. When I reflected on my day, I found myself thinking about being able to pursue things that bring me joy. These positive moments are exactly what I want to remember.</div>
+                </div>
+            `;
+        }
+
         if (this.data.length === 0) {
-            if (diaryEl) diaryEl.textContent = 'Start tracking your mood to see AI-generated diary entries here.';
             if (insightsEl) insightsEl.textContent = 'Insights will appear as you build your mood history.';
             return;
         }
 
         try {
-            // Generate weekly summary
-            const recentEntries = this.data.slice(0, 7);
-            const weeklySummary = generateWeeklySummary(recentEntries);
-            
-            if (diaryEl) {
-                diaryEl.innerHTML = `
-                    <div class="diary-entry">
-                        <div class="diary-date">This Week</div>
-                        <div class="diary-text">${weeklySummary}</div>
-                    </div>
-                `;
-            }
 
             // Generate personalized insights
             const insights = generatePersonalizedInsights(stats, this.data);
@@ -456,5 +456,30 @@ export class StatsView {
         this.container = null;
         this.data = null;
         this.charts = {};
+    }
+    
+    getMoodData(moodValue) {
+        if (!moodValue) return null;
+        
+        return MOODS.levels.find(mood => mood.value === moodValue);
+    }
+    
+    generateFallbackDiary(entry) {
+        // Generate a simple fallback diary entry if none exists
+        if (!entry.mood) {
+            return "Today I took time to check in with myself. Every moment of self-awareness is valuable.";
+        }
+        
+        const moodData = this.getMoodData(entry.mood);
+        const moodWord = moodData ? moodData.label.toLowerCase() : 'okay';
+        const moodEmoji = moodData ? moodData.emoji : '😐';
+        
+        if (entry.mood >= 4) {
+            return `Today was ${moodWord}! ${moodEmoji} I felt positive energy throughout the day and engaged in meaningful activities.`;
+        } else if (entry.mood >= 3) {
+            return `Today felt ${moodWord} and balanced ${moodEmoji}. I took time for self-reflection and stayed present with my experiences.`;
+        } else {
+            return `Today was challenging - feeling ${moodWord} ${moodEmoji}. I'm learning to be gentle with myself during difficult moments.`;
+        }
     }
 }

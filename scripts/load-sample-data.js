@@ -25,6 +25,8 @@ export async function loadSampleData(options = {}) {
         if (clearExisting) {
             console.log('🧹 Clearing existing data...');
             storageManager.clearAll();
+            // Also ensure no unfinished entries remain
+            localStorage.removeItem('daily_sync_entries');
         }
         
         // Generate sample entries
@@ -37,6 +39,10 @@ export async function loadSampleData(options = {}) {
         for (const entry of sampleEntries) {
             await storageManager.saveEntry(entry);
         }
+        
+        // Verify entries were saved
+        const savedEntries = await storageManager.getAllEntries();
+        console.log(`✅ Verified ${savedEntries.length} entries saved to localStorage`);
         
         // Calculate and log statistics
         const stats = calculateSampleStats(sampleEntries);
