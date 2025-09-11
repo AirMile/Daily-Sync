@@ -46,5 +46,37 @@
 
     <!-- ES6 Modules -->
     <script type="module" src="modules/app.js"></script>
+    
+    <!-- Demo Data Helper for Console Access -->
+    <script type="module">
+        import { quickLoadSampleData, displayDataSummary, exportCurrentData, loadSampleData } from './scripts/load-sample-data.js';
+        import storageManager from './modules/storage.js';
+        
+        // Make sample data functions globally available for testing
+        window.DemoData = {
+            load: quickLoadSampleData,
+            loadCustom: loadSampleData,
+            summary: displayDataSummary,
+            export: exportCurrentData,
+            clear: () => {
+                storageManager.clearAll();
+                console.log('🧹 All localStorage data cleared');
+                location.reload();
+            },
+            reset: async () => {
+                storageManager.clearAll();
+                console.log('🔄 Resetting demo data...');
+                await quickLoadSampleData();
+                console.log('✅ Demo data reset complete');
+                location.reload();
+            }
+        };
+        
+        console.log('🛠️ Demo functions available:');
+        console.log('• DemoData.summary() - Show current data summary');
+        console.log('• DemoData.clear() - Clear all data and reload');
+        console.log('• DemoData.reset() - Reset with fresh sample data');
+        console.log('• DemoData.load() - Load sample data (if empty)');
+    </script>
 </body>
 </html>

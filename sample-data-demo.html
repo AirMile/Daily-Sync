@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sync - Sample Data Demo</title>
+    <style>
+        :root {
+            --primary-color: #60A5FA;
+            --success-color: #10B981;
+            --warning-color: #FBBF24;
+            --danger-color: #EF4444;
+            --background-color: #F8FAFC;
+            --text-color: #1E293B;
+            --border-color: #E2E8F0;
+            --card-background: #FFFFFF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        h2 {
+            color: var(--text-color);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            margin: 8px;
+        }
+        
+        .btn:hover {
+            background: #3B82F6;
+        }
+        
+        .btn.success {
+            background: var(--success-color);
+        }
+        
+        .btn.success:hover {
+            background: #059669;
+        }
+        
+        .btn.warning {
+            background: var(--warning-color);
+        }
+        
+        .btn.warning:hover {
+            background: #D97706;
+        }
+        
+        .btn.danger {
+            background: var(--danger-color);
+        }
+        
+        .btn.danger:hover {
+            background: #DC2626;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        
+        .status.success {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        
+        .status.error {
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+        
+        .status.info {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+        }
+        
+        .console-output {
+            background: #1E293B;
+            color: #E2E8F0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            white-space: pre-line;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .description {
+            color: #64748B;
+            margin-bottom: 16px;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--success-color);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Daily Sync - Sample Data Demo</h1>
+        
+        <div class="card">
+            <h2>📊 Load Sample Data</h2>
+            <p class="description">
+                Generate realistic sample data for the Daily Sync App prototype. This includes mood entries, 
+                activities, question responses, and AI-generated diary entries spanning multiple days.
+            </p>
+            
+            <div class="grid">
+                <button class="btn success" onclick="quickLoad()">
+                    🚀 Quick Load (30 days)
+                </button>
+                <button class="btn" onclick="loadExtended()">
+                    📈 Extended Load (60 days)
+                </button>
+                <button class="btn warning" onclick="appendData()">
+                    ➕ Add More Data (14 days)
+                </button>
+                <button class="btn danger" onclick="clearData()">
+                    🧹 Clear All Data
+                </button>
+            </div>
+            
+            <div id="progress-container" style="display: none;">
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <p id="progress-text">Loading...</p>
+            </div>
+            
+            <div id="status-message"></div>
+            <div id="console-output"></div>
+        </div>
+        
+        <div class="card">
+            <h2>📋 Current Data Summary</h2>
+            <p class="description">
+                View information about the currently loaded data in localStorage.
+            </p>
+            
+            <button class="btn" onclick="showSummary()">
+                📊 Show Data Summary
+            </button>
+            
+            <div id="summary-output"></div>
+        </div>
+        
+        <div class="card">
+            <h2>🔧 Developer Tools</h2>
+            <p class="description">
+                Additional tools for working with sample data and testing the application.
+            </p>
+            
+            <div class="grid">
+                <button class="btn" onclick="exportData()">
+                    📄 Export Data
+                </button>
+                <button class="btn" onclick="testDiaryGeneration()">
+                    📝 Test Diary Generation
+                </button>
+                <button class="btn" onclick="openMainApp()">
+                    🚀 Open Main App
+                </button>
+                <button class="btn" onclick="showConsoleHelpers()">
+                    💡 Console Helpers
+                </button>
+            </div>
+            
+            <div id="dev-output"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { loadSampleData, quickLoadSampleData, loadExtendedSampleData, appendSampleData, displayDataSummary, exportCurrentData } from './scripts/load-sample-data.js';
+        import { generateSampleEntries, calculateSampleStats } from './modules/sample-data.js';
+        import { generateDiaryEntry } from './modules/ai-diary.js';
+        import storageManager from './modules/storage.js';
+
+        // Make functions globally available
+        window.quickLoad = async function() {
+            await executeWithProgress('Loading 30 days of sample data...', quickLoadSampleData);
+        };
+
+        window.loadExtended = async function() {
+            await executeWithProgress('Loading 60 days of sample data...', loadExtendedSampleData);
+        };
+
+        window.appendData = async function() {
+            await executeWithProgress('Adding 14 days of data...', () => appendSampleData(14));
+        };
+
+        window.clearData = async function() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                await executeWithProgress('Clearing all data...', async () => {
+                    storageManager.clearAll();
+                    return { success: true, message: 'All data cleared successfully' };
+                });
+            }
+        };
+
+        window.showSummary = async function() {
+            const summary = await displayDataSummary();
+            const output = document.getElementById('summary-output');
+            
+            if (summary) {
+                output.innerHTML = `
+                    <div class="status info">
+                        <strong>📊 Data Summary:</strong><br>
+                        • Total entries: ${summary.entries}<br>
+                        • Current streak: ${summary.streak} days<br>
+                        • User data: ${summary.hasUserData ? 'Present' : 'Not set'}
+                    </div>
+                `;
+            } else {
+                output.innerHTML = `<div class="status error">Failed to get data summary</div>`;
+            }
+        };
+
+        window.exportData = async function() {
+            const data = await exportCurrentData();
+            if (data) {
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `daily-sync-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('dev-output').innerHTML = `
+                    <div class="status success">Data exported successfully!</div>
+                `;
+            }
+        };
+
+        window.testDiaryGeneration = function() {
+            const sampleEntry = {
+                mood: 4,
+                activities: ['happy', 'exercise', 'friends'],
+                questions: [{ text: 'What makes you happy?' }],
+                responses: ['Spending time with loved ones and staying active']
+            };
+            
+            const diaryEntry = generateDiaryEntry(sampleEntry);
+            
+            document.getElementById('dev-output').innerHTML = `
+                <div class="status info">
+                    <strong>📝 Sample Diary Entry:</strong><br>
+                    "${diaryEntry}"
+                </div>
+            `;
+        };
+
+        window.openMainApp = function() {
+            window.open('./index.html', '_blank');
+        };
+
+        window.showConsoleHelpers = function() {
+            document.getElementById('dev-output').innerHTML = `
+                <div class="console-output">
+Available Console Functions:
+
+• DailySyncSampleData.quickLoad()     - Load 30 days of demo data
+• DailySyncSampleData.loadExtended()  - Load 60 days of demo data  
+• DailySyncSampleData.append(days)    - Add more historical data
+• DailySyncSampleData.summary()       - Show current data summary
+• DailySyncSampleData.export()        - Export current data
+• DailySyncSampleData.clear()         - Clear all data
+
+Example usage:
+> await DailySyncSampleData.quickLoad()
+> await DailySyncSampleData.summary()
+                </div>
+            `;
+        };
+
+        async function executeWithProgress(message, operation) {
+            const statusDiv = document.getElementById('status-message');
+            const consoleDiv = document.getElementById('console-output');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            // Show progress
+            progressContainer.style.display = 'block';
+            progressText.textContent = message;
+            progressBar.style.width = '0%';
+            
+            // Clear previous output
+            statusDiv.innerHTML = '';
+            consoleDiv.innerHTML = '';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 100);
+            
+            try {
+                // Capture console output
+                const originalLog = console.log;
+                let consoleOutput = '';
+                console.log = (...args) => {
+                    consoleOutput += args.join(' ') + '\n';
+                    originalLog(...args);
+                };
+                
+                const result = await operation();
+                
+                // Restore console
+                console.log = originalLog;
+                
+                // Complete progress
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    
+                    if (result.success) {
+                        statusDiv.innerHTML = `<div class="status success">${result.message}</div>`;
+                    } else {
+                        statusDiv.innerHTML = `<div class="status error">${result.message}</div>`;
+                    }
+                    
+                    if (consoleOutput) {
+                        consoleDiv.innerHTML = `<div class="console-output">${consoleOutput}</div>`;
+                    }
+                }, 500);
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                progressContainer.style.display = 'none';
+                statusDiv.innerHTML = `<div class="status error">Error: ${error.message}</div>`;
+                console.error('Operation failed:', error);
+            }
+        }
+
+        // Show initial help message
+        document.getElementById('console-output').innerHTML = `
+            <div class="console-output">
+Welcome to Daily Sync Sample Data Demo! 
+
+Click "Quick Load" to generate 30 days of realistic sample data including:
+• Mood entries with weekly patterns (better weekends, harder Mondays)
+• Diverse activities from all categories
+• Thoughtful question responses
+• AI-generated diary entries
+• Statistics and streaks
+
+This data will help demonstrate all app features for the prototype.
+            </div>
+        `;
+    </script>
+</body>
+</html>

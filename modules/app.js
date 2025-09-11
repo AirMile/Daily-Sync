@@ -2,6 +2,12 @@
 // Handles navigation between screens, manages app state, and coordinates all modules
 import { APP_SETTINGS, getQuestionsByMood, getRandomQuestions } from './config.js';
 import storageManager from './storage.js';
+import { MoodSelector } from '../components/mood-selector.js';
+import { ActivitySelector } from '../components/activity-selector.js';
+import { QuestionCard } from '../components/question-card.js';
+import { StatsView } from '../components/stats-view.js';
+import { DiaryView } from '../components/diary-view.js';
+import { quickLoadSampleData } from '../scripts/load-sample-data.js';
 
 class DailySyncApp {
     constructor() {
@@ -14,13 +20,22 @@ class DailySyncApp {
             error: null
         };
         
+        // Component instances
+        this.components = {
+            moodSelector: null,
+            activitySelector: null,
+            questionCard: null,
+            statsView: null,
+            diaryView: null
+        };
+        
         this.routes = {
-            'home': () => this.renderHomeView(),
-            'mood': () => this.renderMoodView(),
-            'questions': () => this.renderQuestionsView(),
-            'activities': () => this.renderActivitiesView(),
-            'diary': () => this.renderDiaryView(),
-            'stats': () => this.renderStatsView()
+            'home': () => this.showHomeView(),
+            'mood': () => this.showMoodView(),
+            'questions': () => this.showQuestionsView(),
+            'activities': () => this.showActivitiesView(),
+            'diary': () => this.showDiaryView(),
+            'stats': () => this.showStatsView()
         };
         
         this.initialize();
@@ -41,19 +56,21 @@ class DailySyncApp {
             const streak = await storageManager.getStreak();
             this.setState({ streak });
             
+            // Auto-load sample data if no entries exist (for demo purposes)
+            await this.ensureDemoData();
+            
             // Setup event listeners
             this.setupEventListeners();
             
-            // Check for unfinished entry
+            // Check for unfinished entry but don't auto-navigate
             const unfinishedEntry = await storageManager.getUnfinishedEntry();
             if (unfinishedEntry) {
                 this.state.currentEntry = unfinishedEntry;
-                this.navigateTo('questions');
-            } else {
-                // Check current route from URL
-                const currentRoute = this.getCurrentRoute();
-                this.navigateTo(currentRoute);
             }
+            
+            // Always check current route from URL (don't bypass home page)
+            const currentRoute = this.getCurrentRoute();
+            this.navigateTo(currentRoute);
             
         } catch (error) {
             this.handleError(error);
@@ -75,8 +92,9 @@ class DailySyncApp {
     setupEventListeners() {
         // Custom component events
         document.addEventListener('mood-selected', (event) => this.handleMoodSelected(event));
-        document.addEventListener('question-answered', (event) => this.handleQuestionAnswered(event));
-        document.addEventListener('activity-logged', (event) => this.handleActivityLogged(event));
+        document.addEventListener('questions-completed', (event) => this.handleQuestionsCompleted(event));
+        document.addEventListener('questions-auto-saved', (event) => this.handleQuestionsAutoSaved(event));
+        document.addEventListener('activities-selected', (event) => this.handleActivitiesSelected(event));
         document.addEventListener('navigate', (event) => this.handleNavigation(event));
         
         // Browser navigation
@@ -93,60 +111,69 @@ class DailySyncApp {
     }
     
     handleMoodSelected(event) {
-        const moodValue = event.detail.mood;
+        const { mood, label, emoji, color } = event.detail;
         
         // Start new entry or update existing
         if (!this.state.currentEntry) {
             this.state.currentEntry = this.createNewEntry();
         }
         
-        this.state.currentEntry.mood = moodValue;
+        this.state.currentEntry.mood = mood;
+        this.state.currentEntry.moodData = { value: mood, label, emoji, color };
         this.state.currentEntry.timestamp = Date.now();
         
-        // Save and navigate to questions
+        // Save and navigate to activities
         storageManager.saveEntry(this.state.currentEntry);
-        this.navigateTo('questions');
+        this.navigateTo('activities');
     }
     
-    async handleQuestionAnswered(event) {
-        const { questionId, answer } = event.detail;
+    async handleQuestionsCompleted(event) {
+        const { answers, questions, mood } = event.detail;
         
-        if (!this.state.currentEntry.answers) {
-            this.state.currentEntry.answers = {};
+        if (!this.state.currentEntry) {
+            this.state.currentEntry = this.createNewEntry();
         }
         
-        this.state.currentEntry.answers[questionId] = answer;
-        
-        // Validate answer length
-        if (answer.length < APP_SETTINGS.validation.minAnswerLength) {
-            this.showError("Answer must be at least 10 characters");
-            return;
-        }
-        
-        // Save entry
-        await storageManager.saveEntry(this.state.currentEntry);
-        
-        // Check if all questions are answered
-        if (this.allQuestionsAnswered()) {
-            this.navigateTo('activities');
-        }
-    }
-    
-    async handleActivityLogged(event) {
-        const activities = event.detail.activities;
-        
-        this.state.currentEntry.activities = activities;
+        // Store answers and questions
+        this.state.currentEntry.answers = answers;
+        this.state.currentEntry.questions = questions;
         
         // Mark entry as complete
         this.state.currentEntry.completed = true;
+        this.state.currentEntry.completedAt = Date.now();
         
         // Save entry and update streak
         await storageManager.saveEntry(this.state.currentEntry);
         await this.updateStreak();
         
-        // Reset current entry and go to diary view
+        // Reset current entry and go to statistics view
         this.state.currentEntry = null;
-        this.navigateTo('diary');
+        this.navigateTo('stats');
+    }
+    
+    async handleQuestionsAutoSaved(event) {
+        const { answers, currentQuestion, totalQuestions } = event.detail;
+        
+        if (this.state.currentEntry) {
+            this.state.currentEntry.answers = answers;
+            this.state.currentEntry.currentQuestionIndex = currentQuestion;
+            await storageManager.saveEntry(this.state.currentEntry);
+        }
+    }
+    
+    async handleActivitiesSelected(event) {
+        const { activities, count } = event.detail;
+        
+        if (!this.state.currentEntry) {
+            this.state.currentEntry = this.createNewEntry();
+        }
+        
+        this.state.currentEntry.activities = activities;
+        this.state.currentEntry.activityCount = count;
+        
+        // Save entry and navigate to questions
+        await storageManager.saveEntry(this.state.currentEntry);
+        this.navigateTo('questions');
     }
     
     handleNavigation(event) {
@@ -163,6 +190,12 @@ class DailySyncApp {
         if (!this.routes[viewName]) {
             this.handleError(new Error(`Unknown view: ${viewName}`));
             return;
+        }
+        
+        // Reset current entry when navigating to home
+        if (viewName === 'home') {
+            this.state.currentEntry = null;
+            this.destroyAllComponents();
         }
         
         // Update state
@@ -222,19 +255,20 @@ class DailySyncApp {
             }
         });
         
-        // Render current view
-        const renderFunction = this.routes[this.state.currentView];
-        if (renderFunction) {
-            viewContainer.innerHTML = renderFunction();
+        // Show current view
+        const showFunction = this.routes[this.state.currentView];
+        if (showFunction) {
+            showFunction();
         }
     }
     
-    renderHomeView() {
-        return `
+    showHomeView() {
+        const viewContainer = document.getElementById('view-container');
+        viewContainer.innerHTML = `
             <div class="home-view">
                 <h2>Welcome to Daily Sync</h2>
                 <p>How do you feel today?</p>
-                <button class="primary-btn" onclick="app.navigateTo('mood')">
+                <button class="primary-btn start-today-btn">
                     Start today
                 </button>
                 <div class="streak-info">
@@ -242,136 +276,189 @@ class DailySyncApp {
                 </div>
             </div>
         `;
-    }
-    
-    renderMoodView() {
-        return `
-            <div class="mood-view">
-                <h2>How do you feel today?</h2>
-                <div class="mood-selector">
-                    <button class="mood-btn" data-mood="5">😄</button>
-                    <button class="mood-btn" data-mood="4">😊</button>
-                    <button class="mood-btn" data-mood="3">😐</button>
-                    <button class="mood-btn" data-mood="2">😔</button>
-                    <button class="mood-btn" data-mood="1">😢</button>
-                </div>
-                <script>
-                    document.querySelectorAll('.mood-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const mood = parseInt(e.target.getAttribute('data-mood'));
-                            document.dispatchEvent(new CustomEvent('mood-selected', { 
-                                detail: { mood } 
-                            }));
-                        });
-                    });
-                </script>
-            </div>
-        `;
-    }
-    
-    renderQuestionsView() {
-        if (!this.state.currentEntry || this.state.currentEntry.mood === null) {
+        
+        // Bind start button
+        viewContainer.querySelector('.start-today-btn').addEventListener('click', () => {
             this.navigateTo('mood');
-            return '';
+        });
+        
+        // Hide all components
+        this.hideAllComponents();
+    }
+    
+    showMoodView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        // Initialize mood selector component if not exists
+        if (!this.components.moodSelector) {
+            viewContainer.innerHTML = '<div id="mood-selector-container"></div>';
+            const container = document.getElementById('mood-selector-container');
+            this.components.moodSelector = new MoodSelector(container);
         }
         
-        const questions = getRandomQuestions(
-            getQuestionsByMood(this.state.currentEntry.mood),
-            3
-        );
+        // Hide other components but not the mood selector
+        if (this.components.activitySelector) {
+            this.components.activitySelector.hide();
+        }
+        if (this.components.questionCard) {
+            this.components.questionCard.hide();
+        }
         
-        return `
-            <div class="questions-view">
-                <h2>Tell us more about your day</h2>
-                <div class="questions-container">
-                    ${questions.map((q, index) => `
-                        <div class="question-card" data-question-id="${q.id}">
-                            <h3>${q.text}</h3>
-                            <textarea 
-                                placeholder="Your answer (minimum 10 characters)..."
-                                data-question-id="${q.id}"
-                            ></textarea>
-                            <button class="submit-answer-btn" data-question-id="${q.id}">
-                                Next
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-                <script>
-                    document.querySelectorAll('.submit-answer-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const questionId = e.target.getAttribute('data-question-id');
-                            const textarea = document.querySelector(\`textarea[data-question-id="\${questionId}"]\`);
-                            const answer = textarea.value.trim();
-                            
-                            if (answer.length >= 10) {
-                                document.dispatchEvent(new CustomEvent('question-answered', { 
-                                    detail: { questionId, answer } 
-                                }));
-                                e.target.closest('.question-card').style.opacity = '0.5';
-                                e.target.disabled = true;
-                            } else {
-                                alert('Answer must be at least 10 characters');
-                            }
-                        });
-                    });
-                </script>
-            </div>
-        `;
+        this.components.moodSelector.reset();
+        this.components.moodSelector.show();
     }
     
-    renderActivitiesView() {
-        return `
-            <div class="activities-view">
-                <h2>What did you do today?</h2>
-                <p>Select the activities you engaged in today.</p>
-                <div class="activities-list">
-                    <label><input type="checkbox" value="work"> Work</label>
-                    <label><input type="checkbox" value="exercise"> Exercise</label>
-                    <label><input type="checkbox" value="social"> Social</label>
-                    <label><input type="checkbox" value="hobby"> Hobby</label>
-                    <label><input type="checkbox" value="rest"> Rest</label>
-                </div>
-                <button class="primary-btn" onclick="this.submitActivities()">
-                    Complete
-                </button>
-                <script>
-                    function submitActivities() {
-                        const checked = document.querySelectorAll('.activities-list input:checked');
-                        const activities = Array.from(checked).map(input => input.value);
-                        
-                        document.dispatchEvent(new CustomEvent('activity-logged', { 
-                            detail: { activities } 
-                        }));
-                    }
-                    window.submitActivities = submitActivities;
-                </script>
-            </div>
-        `;
+    showQuestionsView() {
+        if (!this.state.currentEntry || (this.state.currentEntry.mood === null && this.state.currentEntry.mood !== 0) || !this.state.currentEntry.activities) {
+            this.navigateTo('mood');
+            return;
+        }
+        
+        const viewContainer = document.getElementById('view-container');
+        
+        // Initialize question card component if not exists
+        if (!this.components.questionCard) {
+            viewContainer.innerHTML = '<div id="question-card-container"></div>';
+            const container = document.getElementById('question-card-container');
+            this.components.questionCard = new QuestionCard(container);
+        }
+        
+        // Hide other components but not the question card
+        if (this.components.moodSelector) {
+            this.components.moodSelector.hide();
+        }
+        if (this.components.activitySelector) {
+            this.components.activitySelector.hide();
+        }
+        
+        this.components.questionCard.setMood(this.state.currentEntry.mood);
+        
+        // Load existing answers if any
+        if (this.state.currentEntry.answers) {
+            this.components.questionCard.setAnswers(this.state.currentEntry.answers);
+        }
+        
+        this.components.questionCard.show();
     }
     
-    renderDiaryView() {
-        return `
-            <div class="diary-view">
-                <h2>Your diary entry</h2>
-                <p>Thank you for completing your daily check-in!</p>
-                <div class="diary-content">
-                    <p>Your entry has been saved and added to your personal diary.</p>
-                </div>
-                <button class="primary-btn" onclick="app.navigateTo('home')">
-                    Back to home
-                </button>
-            </div>
-        `;
+    showActivitiesView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        // Initialize activity selector component if not exists
+        if (!this.components.activitySelector) {
+            viewContainer.innerHTML = '<div id="activity-selector-container"></div>';
+            const container = document.getElementById('activity-selector-container');
+            this.components.activitySelector = new ActivitySelector(container);
+        }
+        
+        // Hide other components but not the activity selector
+        if (this.components.moodSelector) {
+            this.components.moodSelector.hide();
+        }
+        if (this.components.questionCard) {
+            this.components.questionCard.hide();
+        }
+        
+        this.components.activitySelector.reset();
+        this.components.activitySelector.show();
     }
     
-    renderStatsView() {
-        return `
+    async showDiaryView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        try {
+            // Load all entries for diary view
+            const entries = await storageManager.getAllEntries();
+            
+            // Initialize diary view component if not exists
+            if (!this.components.diaryView) {
+                viewContainer.innerHTML = '<div id="diary-view-container"></div>';
+                const container = document.getElementById('diary-view-container');
+                this.components.diaryView = new DiaryView();
+                await this.components.diaryView.init(container, entries);
+            } else {
+                // Update existing diary view with latest entries
+                this.components.diaryView.updateEntries(entries);
+            }
+            
+            this.hideAllComponents();
+            this.components.diaryView.show();
+            
+        } catch (error) {
+            console.error('Error loading diary view:', error);
+            this.handleError(error);
+        }
+    }
+    
+    async showStatsView() {
+        const viewContainer = document.getElementById('view-container');
+        
+        try {
+            // Load all entries for statistics
+            const entries = await storageManager.getAllEntries();
+            
+            // Destroy existing stats view component to ensure clean initialization
+            if (this.components.statsView) {
+                this.components.statsView.destroy();
+                this.components.statsView = null;
+            }
+            
+            // Create fresh container and component
+            viewContainer.innerHTML = '<div id="stats-view-container"></div>';
+            const container = document.getElementById('stats-view-container');
+            this.components.statsView = new StatsView();
+            
+            // Setup export event listener
+            container.addEventListener('export-requested', (event) => {
+                this.handleExportRequest(event.detail);
+            });
+            
+            // Hide other components
+            this.hideAllComponents();
+            
+            // Initialize stats view with data
+            await this.components.statsView.init(container, entries);
+            
+        } catch (error) {
+            console.error('Error loading stats view:', error);
+            this.showStatsError();
+        }
+    }
+    
+    async handleExportRequest(exportDetails) {
+        try {
+            const { format } = exportDetails;
+            
+            if (format === 'csv') {
+                const success = await storageManager.downloadExport('csv');
+                if (!success) {
+                    alert('Failed to export data as CSV. Please try again.');
+                }
+            } else {
+                const success = await storageManager.downloadExport('json');
+                if (!success) {
+                    alert('Failed to export data as JSON. Please try again.');
+                }
+            }
+        } catch (error) {
+            console.error('Error during export:', error);
+            alert('Export failed. Please try again.');
+        }
+    }
+    
+    showStatsError() {
+        const viewContainer = document.getElementById('view-container');
+        viewContainer.innerHTML = `
             <div class="stats-view">
-                <h2>Your statistics</h2>
-                <p>Coming soon: your mood trends and insights.</p>
-                <div class="stats-placeholder">
-                    <p>Statistics will be implemented in Phase 3</p>
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h3 class="error-title">Error Loading Statistics</h3>
+                    <p class="error-description">
+                        There was a problem loading your statistics. Please try refreshing the page.
+                    </p>
+                    <button class="error-action" onclick="location.reload()">
+                        Refresh Page
+                    </button>
                 </div>
             </div>
         `;
@@ -448,6 +535,59 @@ class DailySyncApp {
         }, 3000);
     }
     
+    hideAllComponents() {
+        // Hide all component instances
+        if (this.components.moodSelector) {
+            this.components.moodSelector.hide();
+        }
+        if (this.components.activitySelector) {
+            this.components.activitySelector.hide();
+        }
+        if (this.components.questionCard) {
+            this.components.questionCard.hide();
+        }
+        if (this.components.diaryView) {
+            this.components.diaryView.hide();
+        }
+        // StatsView doesn't have a hide method - it manages its own container
+    }
+    
+    async ensureDemoData() {
+        try {
+            // Check if we have existing entries
+            const existingEntries = await storageManager.getAllEntries();
+            
+            // If no entries exist, load sample data for demo
+            if (!existingEntries || existingEntries.length === 0) {
+                console.log('🔄 No existing data found, loading sample data for demo...');
+                await quickLoadSampleData();
+                console.log('✅ Sample data loaded successfully');
+            } else {
+                console.log(`📊 Found ${existingEntries.length} existing entries, skipping sample data load`);
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not load sample data:', error);
+            // Don't throw - app should continue working even without sample data
+        }
+    }
+
+    destroyAllComponents() {
+        // Clean up all component instances
+        Object.values(this.components).forEach(component => {
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        });
+        
+        this.components = {
+            moodSelector: null,
+            activitySelector: null,
+            questionCard: null,
+            statsView: null,
+            diaryView: null
+        };
+    }
+
     emit(eventName, detail) {
         const customEvent = new CustomEvent(eventName, { detail });
         document.dispatchEvent(customEvent);

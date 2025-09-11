@@ -16,7 +16,7 @@ class StorageManager {
             return true;
         } catch (error) {
             console.error('LocalStorage not available:', error);
-            throw new Error('LocalStorage is niet beschikbaar');
+            throw new Error('LocalStorage is not available');
         }
     }
     
@@ -271,6 +271,11 @@ class StorageManager {
         try {
             const data = JSON.parse(jsonData);
             
+            // Validate data structure
+            if (!this.validateImportData(data)) {
+                throw new Error('Invalid import data format');
+            }
+            
             if (data.entries) {
                 this.setItem(this.storageKeys.entries, data.entries);
             }
@@ -287,6 +292,121 @@ class StorageManager {
         } catch (error) {
             console.error('Error importing data:', error);
             return false;
+        }
+    }
+
+    validateImportData(data) {
+        if (!data || typeof data !== 'object') {
+            return false;
+        }
+        
+        // Validate entries if present
+        if (data.entries && Array.isArray(data.entries)) {
+            for (const entry of data.entries) {
+                if (!this.validateEntry(entry)) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+
+    async exportToCSV() {
+        try {
+            const entries = await this.getAllEntries();
+            if (!entries || entries.length === 0) {
+                return null;
+            }
+
+            // CSV headers
+            const headers = ['Date', 'Mood', 'Activities', 'Questions', 'Responses'];
+            
+            // Convert entries to CSV rows
+            const rows = entries.map(entry => {
+                const date = new Date(entry.date).toLocaleDateString();
+                const mood = entry.mood || '';
+                const activities = (entry.activities || []).join('; ');
+                const questions = (entry.questions || []).map(q => q.text).join('; ');
+                const responses = (entry.responses || []).join('; ');
+                
+                return [
+                    `"${date}"`,
+                    `"${mood}"`,
+                    `"${activities}"`,
+                    `"${questions}"`,
+                    `"${responses}"`
+                ].join(',');
+            });
+
+            // Combine headers and rows
+            return [headers.join(','), ...rows].join('\n');
+        } catch (error) {
+            console.error('Error exporting to CSV:', error);
+            return null;
+        }
+    }
+
+    async downloadExport(format = 'json') {
+        try {
+            let content, filename, mimeType;
+            
+            if (format === 'csv') {
+                content = await this.exportToCSV();
+                filename = `daily-sync-export-${new Date().toISOString().split('T')[0]}.csv`;
+                mimeType = 'text/csv';
+            } else {
+                content = this.exportData();
+                filename = `daily-sync-export-${new Date().toISOString().split('T')[0]}.json`;
+                mimeType = 'application/json';
+            }
+            
+            if (!content) {
+                throw new Error('No data to export');
+            }
+
+            // Create download link
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+            
+            return true;
+        } catch (error) {
+            console.error('Error downloading export:', error);
+            return false;
+        }
+    }
+
+    async cleanupOldData(daysToKeep = 365) {
+        try {
+            const entries = await this.getAllEntries();
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+            
+            const recentEntries = entries.filter(entry => 
+                new Date(entry.date) >= cutoffDate
+            );
+            
+            if (recentEntries.length !== entries.length) {
+                this.setItem(this.storageKeys.entries, recentEntries);
+                return entries.length - recentEntries.length; // Return number of removed entries
+            }
+            
+            return 0;
+        } catch (error) {
+            console.error('Error cleaning up old data:', error);
+            return -1;
         }
     }
 }
